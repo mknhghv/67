@@ -53,7 +53,7 @@ local UITab5 = win:Tab("传送",'7734068321')
 local about = UITab1:section("公告",true)
 
 about:Label("kismile制作")
-about:Label("脚本测试中")
+about:Label("脚本还在内侧阶段")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
@@ -115,15 +115,7 @@ end)
 -- 缝合
 
 about:Button("飞行",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fly.lua"))()
-end)
-
-about:Button("法天象地",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))()
-end)
-
-about:Button("fps优化（无法关闭）",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/8"))()
 end)
 
 about:Button("hoho",function()
