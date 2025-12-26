@@ -17,7 +17,7 @@ local isLocalPlayerWhitelisted = IsWhitelisted(localPlayer)
 if isLocalPlayerWhitelisted then
     StarterGui:SetCore("SendNotification", {
         Title = "白名單認證",
-        Text = "玩家:"..localPlayer.Name.."，檢查完畢白名單玩家，稍後會凌霄脚本",
+        Text = "玩家:"..localPlayer.Name.."，檢查完畢白名單玩家，稍後會零中心",
         Duration = 7,
     })
 --放腳本
