@@ -8,8 +8,8 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "YK脚本" and 
-               tostring(options.Text) == "kismile制作" 
+               tostring(options.Title) == "零中心" and 
+               tostring(options.Text) == "小轩制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -31,8 +31,8 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "YK脚本",
-	Text = "kismile制作",
+	Title = "零中心",
+	Text = "小轩制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -52,8 +52,8 @@ local UITab5 = win:Tab("传送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("kismile制作")
-about:Label("脚本还在内侧阶段")
+about:Label("小轩制作")
+about:Label("脚本还在测试")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
@@ -838,7 +838,7 @@ task.spawn(function()
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "YK脚本",
+	Title = "零中心",
 	Text = "加载完成 祝您使用愉快",
 	Duration = 5;
 })
