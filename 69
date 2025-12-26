@@ -1,4 +1,4 @@
---这个范围没有限制
+--這個範圍沒有限制
 --zy
 
 local old
@@ -8,8 +8,8 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "YK脚本" and 
-               tostring(options.Text) == "YK制作" 
+               tostring(options.Title) == "人擠人腳本" and 
+               tostring(options.Text) == "YK製作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -31,8 +31,8 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "YK脚本",
-	Text = "YK制作",
+	Title = "人擠人腳本",
+	Text = "YK製作",
 	Duration = 5;
 })
 wait(0.1)
@@ -43,7 +43,7 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ni7ykt/test1/refs/heads/main/ui"))()  
-local win = ui:new("YK中心")
+local win = ui:new("人擠人中心")
 local UITab1 = win:Tab("公告",'7734068321')
 local UITab2 = win:Tab("腳本",'7734068321')
 local UITab3 = win:Tab("神刀",'7734068321')
@@ -52,7 +52,7 @@ local UITab5 = win:Tab("傳送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("YK制作")
+about:Label("YK製作")
 local about = UITab2:section("脚本",true)
 about:Slider("視角縮放距離", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
@@ -145,7 +145,7 @@ _G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
 
 local function SafeWaitForChild(parent, childName)
 	local success, result = pcall(function() return parent:WaitForChild(childName, 10) end)
-	if not success or not result then warn("未找到组件: " .. childName) end
+	if not success or not result then warn("未找到組件: " .. childName) end
 	return result
 end
 
@@ -161,7 +161,7 @@ local function CheckAndGetCoreComponents()
 		if Remotes and Modules and Net and RegisterAttack and RegisterHit and Enemies then
 			return Remotes, Net, RegisterAttack, RegisterHit, Enemies
 		end
-		warn("核心组件缺失，持续重试中...")
+		warn("核心組件缺失，持續重試中...")
 		task.wait(1)
 	end
 end
@@ -281,7 +281,7 @@ Module.FastAttack = (function()
 	return FastAttack
 end)()
 
--- UI控件绑定
+-- UI控鍵綁定
 attackTab:Toggle("開關", "FastAttackToggle", _G.FastAttack, function(state)
 	if _ENV.rz_FastAttack then
 		_ENV.rz_FastAttack.IsRunning = state
@@ -315,7 +315,7 @@ attackTab:Toggle("打玩家", "AttackPlayersToggle", true, function(state)
 	end
 end)
 
--- 组件恢复逻辑
+-- 組件恢復邏輯
 task.spawn(function()
 	while true do
 		task.wait(1)
