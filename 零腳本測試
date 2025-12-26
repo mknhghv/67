@@ -1,8 +1,6 @@
 --这个范围没有限制
 --zy
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%AC%E7%99%BD%E5%90%8D%E5%96%AE"))()
-
 local old
 old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(function(self, ...)
         local method = getnamecallmethod()
