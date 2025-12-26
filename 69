@@ -1,4 +1,4 @@
---這個範圍沒有限制
+--这个范围没有限制
 --zy
 
 local old
@@ -8,8 +8,8 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "人擠人腳本" and 
-               tostring(options.Text) == "YK製作" 
+               tostring(options.Title) == "YK脚本" and 
+               tostring(options.Text) == "kismile制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -31,8 +31,8 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "人擠人腳本",
-	Text = "YK製作",
+	Title = "YK脚本",
+	Text = "kismile制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -43,23 +43,24 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ni7ykt/test1/refs/heads/main/ui"))()  
-local win = ui:new("人擠人中心")
+local win = ui:new("YK中心")
 local UITab1 = win:Tab("公告",'7734068321')
-local UITab2 = win:Tab("腳本",'7734068321')
+local UITab2 = win:Tab("脚本",'7734068321')
 local UITab3 = win:Tab("神刀",'7734068321')
-local UITab4 = win:Tab("透視",'7734068321')
-local UITab5 = win:Tab("傳送",'7734068321')
+local UITab4 = win:Tab("透视",'7734068321')
+local UITab5 = win:Tab("传送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("YK製作")
+about:Label("kismile制作")
+about:Label("脚本测试中")
 local about = UITab2:section("脚本",true)
-about:Slider("視角縮放距離", "Slider",  128, 128, 10000, false, function(Value)
+about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
 end)
--- 自動v4
+-- 自动v4
 
-local toggleKey = "自動v4"
+local toggleKey = "自动v4"
 local autoV4Task = nil
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -83,7 +84,7 @@ local function callAwakeningRemote()
         RemoteFunc:InvokeServer(true)
     end)
     if not success then
-        warn("自動v4調用失敗：", err)
+        warn("自动v4调用失败：", err)
     end
 end
 
@@ -111,17 +112,17 @@ about:Toggle(toggleKey, "Toggle", false, function(IsEnabled)
     toggleAutoV4(IsEnabled)
 end)
 
--- 縫合
+-- 缝合
 
 about:Button("飞行",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/6/refs/heads/main/fly?token=GHSAT0AAAAAADR65KNDRXERSEPUMJHKTJFK2KOX6SA"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fly.lua"))()
 end)
 
 about:Button("法天象地",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))()
 end)
 
-about:Button("無法使用"）",function()
+about:Button("fps优化（无法关闭）",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))()
 end)
 
@@ -145,7 +146,7 @@ _G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
 
 local function SafeWaitForChild(parent, childName)
 	local success, result = pcall(function() return parent:WaitForChild(childName, 10) end)
-	if not success or not result then warn("未找到組件: " .. childName) end
+	if not success or not result then warn("未找到组件: " .. childName) end
 	return result
 end
 
@@ -161,7 +162,7 @@ local function CheckAndGetCoreComponents()
 		if Remotes and Modules and Net and RegisterAttack and RegisterHit and Enemies then
 			return Remotes, Net, RegisterAttack, RegisterHit, Enemies
 		end
-		warn("核心組件缺失，持續重試中...")
+		warn("核心组件缺失，持续重试中...")
 		task.wait(1)
 	end
 end
@@ -281,15 +282,15 @@ Module.FastAttack = (function()
 	return FastAttack
 end)()
 
--- UI控鍵綁定
-attackTab:Toggle("開關", "FastAttackToggle", _G.FastAttack, function(state)
+-- UI控件绑定
+attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
 	if _ENV.rz_FastAttack then
 		_ENV.rz_FastAttack.IsRunning = state
 		_G.FastAttack = state
 	end
 end)
 
-attackTab:Textbox("範圍", "AttackRange", "2500", function(text)
+attackTab:Textbox("范围", "AttackRange", "2500", function(text)
 	local num = tonumber(text) or 2500
 	num = math.floor(math.clamp(num, 1, 2500))
 	if _ENV.rz_FastAttack then
@@ -315,12 +316,12 @@ attackTab:Toggle("打玩家", "AttackPlayersToggle", true, function(state)
 	end
 end)
 
--- 組件恢復邏輯
+-- 组件恢复逻辑
 task.spawn(function()
 	while true do
 		task.wait(1)
 		if not _ENV.rz_FastAttack then
-			warn("⚠️ 快速攻擊組件未完成加載，持續嘗試恢復...")
+			warn("⚠️ 快速攻击组件未完全加载，持续尝试恢复...")
 			while not _ENV.rz_FastAttack do
 				task.wait(0.5)
 				if _G.FastAttack then
@@ -423,14 +424,14 @@ end)
 
 -- 移速功能
 
-attackTab:Textbox("速度", "TranslateAccelSpeed", "輸入速度值", function(Value)
+attackTab:Textbox("速度", "TranslateAccelSpeed", "输入速度值", function(Value)
     local speed = tonumber(Value)
     if speed then
         getfenv().translateSpeed = speed
     end
 end)
 
-attackTab:Toggle("加速開關", "TranslateAccelToggle", false, function(State)
+attackTab:Toggle("加速开关", "TranslateAccelToggle", false, function(State)
     getfenv().translateAccelEnabled = State
     
     if State then
@@ -462,8 +463,8 @@ attackTab:Toggle("加速開關", "TranslateAccelToggle", false, function(State)
     end
 end)
 
--- 透視功能
-local about = UITab4:section("透視",true)
+-- 透视功能
+local about = UITab4:section("透视",true)
 
 
 local ESPConfig = {
@@ -507,18 +508,18 @@ local function CreateNameDistanceHealthESP(player)
     
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "NameDistanceHealthESP"
-    billboardGui.Adornee = head -- 綁訂到玩家頭部
+    billboardGui.Adornee = head -- 绑定到玩家头部
     billboardGui.Size = UDim2.new(0, 120, 0, 50) -- 面板大小
     billboardGui.StudsOffset = Vector3.new(0, 3.5, 0) -- 面板偏移
-    billboardGui.AlwaysOnTop = true -- 顯示在最上層
+    billboardGui.AlwaysOnTop = true -- 显示在最上层
     billboardGui.Parent = head
     
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Parent = billboardGui
     nameLabel.BackgroundTransparency = 1 -- 背景透明
-    nameLabel.Text = player.Name -- 顯示玩家名字
+    nameLabel.Text = player.Name -- 显示玩家名字
     nameLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- 名字顏色,純白色
+    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- 名字颜色 纯白色
     nameLabel.TextScaled = true 
     nameLabel.Font = Enum.Font.GothamSemibold -- 字体 加粗哥特字体
     
@@ -709,22 +710,22 @@ task.spawn(function()
     end
 end)
 
-about:Toggle("透視總開關", "ESP_Main", false, function(enabled)
+about:Toggle("透视总开关", "ESP_Main", false, function(enabled)
     ESPConfig.MainSwitch = enabled
     UpdateAllESP()
 end)
 
-about:Toggle("顯示玩家名字+距離", "ESP_NameDistance", false, function(enabled)
+about:Toggle("显示玩家名字+距离", "ESP_NameDistance", false, function(enabled)
     ESPConfig.ShowNameDistance = enabled
     UpdateAllESP()
 end)
 
-about:Toggle("顯示玩家血量", "ESP_Health", false, function(enabled)
+about:Toggle("显示玩家血量", "ESP_Health", false, function(enabled)
     ESPConfig.ShowHealth = enabled
     UpdateAllESP()
 end)
 
-about:Toggle("設限追蹤（螢幕中心）", "ESP_Tracer", false, function(enabled)
+about:Toggle("射线追踪（屏幕中心）", "ESP_Tracer", false, function(enabled)
     ESPConfig.ShowTracer = enabled
     UpdateAllESP()
 end)
@@ -734,20 +735,20 @@ end)
 local TP = UITab5:section("传送",false)
 
 
-TP:Button("傳送至一海", function()
+TP:Button("传送至一海", function()
     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
 end)
 
-TP:Button("傳送至二海", function()
+TP:Button("传送至二海", function()
     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
 end)
 
-TP:Button("傳送至三海", function()
+TP:Button("传送至三海", function()
     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
 end)
 
 local TP1 = UITab5:section("二海",false)
-TP1:Button("傳送至天鵝的房間", function()
+TP1:Button("传送至天鹅的房间", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(-287.37, 305.81, 592.98)
@@ -758,14 +759,14 @@ TP1:Button("傳送至天鵝的房間", function()
     end
 end)
 
-TP1:Button("傳送至豪宅", function()
+TP1:Button("传送至豪宅", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(2286.93, 15.06, 910.51)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到天鵝的房間:", targetPosition)
+        print("已传送到天鹅的房间:", targetPosition)
     end
 end)
 
@@ -780,59 +781,59 @@ TP1:Button("传送至鬼船里", function()
     end
 end)
 
-TP1:Button("傳送至鬼船外", function()
+TP1:Button("传送至鬼船外", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(922.78, 123.96, 32842.40)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到鬼船外:", targetPosition)
+        print("已传送到鬼船外:", targetPosition)
     end
 end)
 local TP2 = UITab5:section("三海",false)
 
-TP2:Button("傳送至海洋城堡", function()
+TP2:Button("传送至海洋城堡", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(-12463.60, 376.26, -7566.08)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到海洋城堡:", targetPosition)
+        print("已传送到海洋城堡:", targetPosition)
     end
 end)
 
-TP2:Button("傳送至海龜豪宅", function()
+TP2:Button("传送至海龟豪宅", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(-5060.41, 316.43, -3192.30)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到海龜豪宅:", targetPosition)
+        print("已传送到海龟豪宅:", targetPosition)
     end
 end)
 
-TP2:Button("傳送至司法", function()
+TP2:Button("传送至司法", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(-5096.48, 316.43, -3177.91)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到司法:", targetPosition)
+        print("已传送到司法:", targetPosition)
     end
 end)
 
-TP2:Button("傳送至九头蛇", function()
+TP2:Button("传送至九头蛇", function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local targetPosition = Vector3.new(-5027.03, 316.43, -3206.07)
     
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已傳送到九头蛇:", targetPosition)
+        print("已传送到九头蛇:", targetPosition)
     end
 end)
 
