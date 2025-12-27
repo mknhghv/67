@@ -131,8 +131,8 @@ local workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local _ENV = (getgenv or getrenv or getfenv)()
-local Settings = {AutoClick = true, ClickDelay = 0.1}
-Settings.Distance = 10000
+local Settings = {AutoClick = true, ClickDelay = 0.2}
+Settings.Distance = 5000
 local Module = {}
 local _G = _G or getfenv(0)._G
 _G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
