@@ -8,8 +8,8 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "人挤人脚本" and 
-               tostring(options.Text) == "kismile制作" 
+               tostring(options.Title) == "零脚本" and 
+               tostring(options.Text) == "小轩制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -31,8 +31,8 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "人挤人脚本",
-	Text = "kismile制作",
+	Title = "零脚本",
+	Text = "小轩制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -42,17 +42,17 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera 
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ni7ykt/test1/refs/heads/main/ui"))()  
-local win = ui:new("人挤人中心")
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%ACui"))()  
+local win = ui:new("零中心")
 local UITab1 = win:Tab("公告",'7734068321')
 local UITab2 = win:Tab("脚本",'7734068321')
-local UITab3 = win:Tab("神刀",'7734068321')
+local UITab3 = win:Tab("秒杀",'7734068321')
 local UITab4 = win:Tab("透视",'7734068321')
 local UITab5 = win:Tab("传送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("kismile制作")
+about:Label("小轩制作")
 about:Label("脚本测试中")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
@@ -122,7 +122,7 @@ about:Button("法天象地",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))()
 end)
 
-about:Button("fps优化（无法关闭）",function()
+about:Button("fps优化（关闭不了一点傻逼）",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))()
 end)
 
@@ -132,7 +132,7 @@ end)
 
 -- 大佛功能区
 
-local attackTab = UITab3:section("神刀",true)
+local attackTab = UITab3:section("秒杀",true)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
@@ -140,6 +140,7 @@ local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local _ENV = (getgenv or getrenv or getfenv)()
 local Settings = {AutoClick = true, ClickDelay = 0.3}
+Settings.Distance = 5000
 local Module = {}
 local _G = _G or getfenv(0)._G
 _G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
@@ -189,7 +190,7 @@ end
 Module.FastAttack = (function()
 	if _ENV.rz_FastAttack then return _ENV.rz_FastAttack end
 	local FastAttack = {
-		Distance = 2500,
+		Distance = 10000,
 		attackMobs = true,
 		attackPlayers = true,
 		Equipped = nil,
@@ -290,17 +291,17 @@ attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
 	end
 end)
 
-attackTab:Textbox("范围", "AttackRange", "2500", function(text)
-	local num = tonumber(text) or 2500
-	num = math.floor(math.clamp(num, 1, 2500))
+attackTab:Textbox("范围", "AttackRange", "10000", function(text)
+	local num = tonumber(text) or 10000
+	num = math.floor(math.clamp(num, 1, 10000))
 	if _ENV.rz_FastAttack then
 		_ENV.rz_FastAttack.Distance = num
 	end
 end)
 
-attackTab:Textbox("攻速", "ClickDelay", "0.3", function(text)
-	local num = tonumber(text) or 0.3
-	num = math.round(math.clamp(num, 0.05, 2) * 100) / 100
+attackTab:Textbox("攻速", "ClickDelay", "0.1", function(text)
+	local num = tonumber(text) or 0.1
+	num = math.round(math.clamp(num, 0.01, 2) * 100) / 100
 	Settings.ClickDelay = num
 end)
 
@@ -582,7 +583,7 @@ local function CreateTracerESP(player)
     end
     
     local tracer = Drawing.new("Line")
-    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：鲜红色
+    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：白色
     tracer.Thickness = 2 -- 射线粗细：2像素
     tracer.Transparency = 0.8 -- 射线透明度：80%（半透明效果）
     tracer.Visible = false -- 初始隐藏
@@ -846,7 +847,7 @@ task.spawn(function()
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "人挤人脚本",
+	Title = "零脚本",
 	Text = "加载完成 祝您使用愉快",
 	Duration = 5;
 })
