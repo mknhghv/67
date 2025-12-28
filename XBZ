@@ -9,7 +9,7 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
             local options = args[2]
             if type(options) == "table" and 
                tostring(options.Title) == "下辈子脚本" and 
-               tostring(options.Text) == "YC制作" 
+               tostring(options.Text) == "育成制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -32,7 +32,7 @@ main.Start = returnnil
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
 	Title = "下辈子脚本",
-	Text = "YC制作",
+	Text = "育成制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -42,14 +42,19 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera 
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
-local ui = https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/XBZ-UI"))()  
-local win = ui:new("下辈子")
-local UITab1 = win:Tab("脚本",'7734068321')
-local UITab2 = win:Tab("范围",'7734068321')
-local UITab3 = win:Tab("透视",'7734068321')
-local UITab4 = win:Tab("传送",'7734068321')
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/UI"))()  
+local win = ui:new("零中心")
+local UITab1 = win:Tab("公告",'7734068321')
+local UITab2 = win:Tab("脚本",'7734068321')
+local UITab3 = win:Tab("秒杀",'7734068321')
+local UITab4 = win:Tab("透视",'7734068321')
+local UITab5 = win:Tab("传送",'7734068321')
 
-local about = UITab1:section("脚本",true)
+local about = UITab1:section("公告",true)
+
+about:Label("育成制作")
+about:Label("脚本测试中")
+local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
 end)
@@ -110,7 +115,31 @@ end)
 -- 缝合
 
 about:Button("飞行",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/8"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fly"))()
+end)
+
+about:Button("法天象地",function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/法天像地"))()
+end)
+
+about:Button("redz",function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/redz"))()
+end)
+
+about:Button("皮脚本",function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/皮"))()
+end)
+
+local VirtualUser = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    -- 當系統檢測到你閒置時，模擬滑鼠點擊螢幕，這比跳躍更穩
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0,0))
+    print("零域 | 已攔截掛機檢測，持續運行中...")
+end)
+
+about:Button("fps优化（关闭不了一点傻逼）",function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fps优化"))()
 end)
 
 about:Button("hoho",function()
@@ -119,14 +148,14 @@ end)
 
 -- 大佛功能区
 
-local attackTab = UITab2:section("范围",true)
+local attackTab = UITab3:section("秒杀",true)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local _ENV = (getgenv or getrenv or getfenv)()
-local Settings = {AutoClick = true, ClickDelay = 0.2}
+local Settings = {AutoClick = true, ClickDelay = 0.3}
 Settings.Distance = 5000
 local Module = {}
 local _G = _G or getfenv(0)._G
@@ -278,7 +307,7 @@ attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
 	end
 end)
 
-attackTab:Textbox("范围", "AttackRange", "5000", function(text)
+attackTab:Textbox("范围", "AttackRange", "10000", function(text)
 	local num = tonumber(text) or 10000
 	num = math.floor(math.clamp(num, 1, 10000))
 	if _ENV.rz_FastAttack then
@@ -286,19 +315,19 @@ attackTab:Textbox("范围", "AttackRange", "5000", function(text)
 	end
 end)
 
-attackTab:Textbox("攻速", "ClickDelay", "0.2", function(text)
+attackTab:Textbox("攻速", "ClickDelay", "0.1", function(text)
 	local num = tonumber(text) or 0.1
 	num = math.round(math.clamp(num, 0.01, 2) * 100) / 100
 	Settings.ClickDelay = num
 end)
 
-attackTab:Toggle("打怪物", "AttackMobsToggle", true, function(state)
+attackTab:Toggle("打怪", "AttackMobsToggle", true, function(state)
 	if _ENV.rz_FastAttack then
 		_ENV.rz_FastAttack.attackMobs = state
 	end
 end)
 
-attackTab:Toggle("打玩家", "AttackPlayersToggle", true, function(state)
+attackTab:Toggle("打人", "AttackPlayersToggle", true, function(state)
 	if _ENV.rz_FastAttack then
 		_ENV.rz_FastAttack.attackPlayers = state
 	end
@@ -452,7 +481,7 @@ attackTab:Toggle("加速开关", "TranslateAccelToggle", false, function(State)
 end)
 
 -- 透视功能
-local about = UITab3:section("透视",true)
+local about = UITab4:section("透视",true)
 
 
 local ESPConfig = {
@@ -570,7 +599,7 @@ local function CreateTracerESP(player)
     end
     
     local tracer = Drawing.new("Line")
-    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：白色
+    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：鲜红色
     tracer.Thickness = 2 -- 射线粗细：2像素
     tracer.Transparency = 0.8 -- 射线透明度：80%（半透明效果）
     tracer.Visible = false -- 初始隐藏
@@ -720,7 +749,7 @@ end)
 
 
 
-local TP = UITab4:section("传送",false)
+local TP = UITab5:section("传送",false)
 
 
 TP:Button("传送至一海", function()
