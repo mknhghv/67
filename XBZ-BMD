@@ -1,19 +1,45 @@
+-- Whitelist Script for Blox Fruits (Roblox Lua)
+-- 右下角提示 + 只對白名單玩家顯示
+
 local whitelist = {
-    "mknhghv",  -- Add your username
+    "mknhghv",     -- 換成你的 Roblox 名稱
+
+    -- 繼續加其他白名單玩家名稱
 }
 
 local player = game.Players.LocalPlayer
 local isWhitelisted = false
 
+-- 檢查是否在白名單
 for _, username in ipairs(whitelist) do
-    if player.Name == username then
+    if player.Name == username or player.DisplayName == username then
         isWhitelisted = true
         break
     end
 end
 
 if not isWhitelisted then
-    player:Kick("你沒有白名單")
+    -- 非白名單直接踢出
+    player:Kick("你不在白名單中，無法使用此腳本。")
 else
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%AC%E6%B8%AC%E8%A9%A6"))()
+    -- 白名單玩家：先顯示右下角提示「正在加載腳本...」
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "下輩子脚本",
+        Text = "正在加載腳本，請稍等...",
+        Duration = 5,  -- 顯示 5 秒
+        Icon = ""      -- 可選：放圖示連結
+    })
+
+    -- 等待一點時間後顯示成功訊息（模擬加載）
+    wait(2)
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Blox Fruits Script",
+        Text = "腳本加載完成！歡迎使用，" .. player.Name .. "！",
+        Duration = 6,
+        Icon = ""
+    })
+
+    -- 在這裡放你的主要腳本內容
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/XBZ"))()
 end
