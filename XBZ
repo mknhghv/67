@@ -8,7 +8,7 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "XBZ脚本" and 
+               tostring(options.Title) == "下辈子脚本" and 
                tostring(options.Text) == "YC制作" 
             then
                 local modifiedOptions = table.clone(options)
@@ -31,7 +31,7 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "XBZ脚本",
+	Title = "下辈子脚本",
 	Text = "YC制作",
 	Duration = 5;
 })
@@ -43,17 +43,12 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/XBZ-UI"))()  
-local win = ui:new("XBZ中心")
-local UITab1 = win:Tab("公告",'7734068321')
+local win = ui:new("下辈子脚本")
 local UITab2 = win:Tab("脚本",'7734068321')
 local UITab3 = win:Tab("范围",'7734068321')
 local UITab4 = win:Tab("透视",'7734068321')
 local UITab5 = win:Tab("传送",'7734068321')
 
-local about = UITab1:section("公告",true)
-
-about:Label("YC制作")
-about:Label("脚本测试中")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
@@ -839,7 +834,7 @@ task.spawn(function()
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "XBZ脚本",
+	Title = "下辈子脚本",
 	Text = "加载完成",
 	Duration = 5;
 })
