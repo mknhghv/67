@@ -43,13 +43,13 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/XBZ-UI"))()  
-local win = ui:new("下辈子脚本")
-local UITab2 = win:Tab("脚本",'7734068321')
-local UITab3 = win:Tab("范围",'7734068321')
-local UITab4 = win:Tab("透视",'7734068321')
-local UITab5 = win:Tab("传送",'7734068321')
+local win = ui:new("下辈子")
+local UITab1 = win:Tab("脚本",'7734068321')
+local UITab2 = win:Tab("范围",'7734068321')
+local UITab3 = win:Tab("透视",'7734068321')
+local UITab4 = win:Tab("传送",'7734068321')
 
-local about = UITab2:section("脚本",true)
+local about = UITab1:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
 end)
@@ -119,7 +119,7 @@ end)
 
 -- 大佛功能区
 
-local attackTab = UITab3:section("范围",true)
+local attackTab = UITab2:section("范围",true)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
@@ -452,7 +452,7 @@ attackTab:Toggle("加速开关", "TranslateAccelToggle", false, function(State)
 end)
 
 -- 透视功能
-local about = UITab4:section("透视",true)
+local about = UITab3:section("透视",true)
 
 
 local ESPConfig = {
@@ -720,7 +720,7 @@ end)
 
 
 
-local TP = UITab5:section("传送",false)
+local TP = UITab4:section("传送",false)
 
 
 TP:Button("传送至一海", function()
