@@ -30,7 +30,7 @@ local function Authenticate()
             })
             
             -- 【已修改】指向你的中文名核心功能檔案
-            local coreUrl = "https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/零"
+            local coreUrl = "https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%AC%E6%B8%AC%E8%A9%A6"
             
             -- 嘗試抓取內容
             local success, content = pcall(function() 
