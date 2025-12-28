@@ -37,7 +37,7 @@ else
         Title = "下辈子脚本",
         Text = "腳本加載完成！歡迎使用，" .. player.Name .. "！",
         Duration = 6,
-        Icon = ""
+        Icon = "https://p3-pc-sign.douyinpic.com/tos-cn-i-0813c000-ce/osEM9ABueDFf3A8DwHRteEAiAA3iEAn3EIwA4t~tplv-dy-aweme-images-v2:3000:3000:q75.webp?biz_tag=aweme_images&from=327834062&lk3s=138a59ce&s=PackSourceEnum_SEARCH&sc=image&se=false&x-expires=1769454000&x-signature=FDCbo9V6pDt%2B47pVn%2B3aIQ4Ftt8%3D"
     })
 
     -- 在這裡放你的主要腳本內容
