@@ -1,11 +1,19 @@
--- 玄丛腳本 - 終極簡化版 + 雪花動畫
+-- 玄丛腳本 - 快速攻擊優化版
 print("🎮 =================================")
-print("🎮 玄丛腳本 - 終極簡化版 + 雪花")
-print("🎮 包含：快速攻擊 + 皮腳本 + 雪花動畫")
+print("🎮 玄丛腳本 - 快速攻擊優化版")
+print("🎮 秦始皇创作")
 print("🎮 =================================")
+
+-- 檢測設備類型
+local inputService = game:GetService("UserInputService")
+local isMobile = inputService.TouchEnabled
+local isDesktop = inputService.MouseEnabled
+local deviceType = isMobile and "📱 手機" or "🖥️ 電腦"
+print("✅ 檢測到設備: " .. deviceType)
 
 -- 確保遊戲完全加載
 repeat task.wait() until game:IsLoaded()
+print("✅ 遊戲已加載")
 
 -- 獲取玩家
 local player = game.Players.LocalPlayer
@@ -13,399 +21,464 @@ if not player then
     warn("❌ 無法獲取玩家")
     return
 end
+print("✅ 玩家: " .. player.Name)
 
 -- 等待PlayerGui
-task.wait(2)
-local playerGui = player:WaitForChild("PlayerGui", 5)
+local playerGui = player:WaitForChild("PlayerGui", 10)
 if not playerGui then
     warn("❌ 無法找到PlayerGui，嘗試使用CoreGui")
     playerGui = game:GetService("CoreGui")
 end
-
-print("✅ 使用UI容器: " .. playerGui.Name)
+print("✅ UI容器: " .. playerGui.Name)
 
 -- 清理舊的UI
-if playerGui:FindFirstChild("XuanCongScript_Snow") then
-    playerGui.XuanCongScript_Snow:Destroy()
-    print("🗑️ 清理了舊的UI")
+for _, gui in ipairs(playerGui:GetChildren()) do
+    if gui.Name:find("XuanCong") then
+        gui:Destroy()
+    end
 end
+print("🗑️ 清理了舊的UI")
 
 -- ========================
--- 全局變量
+-- 全局服務
 -- ========================
 local tweenService = game:GetService("TweenService")
-local inputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
+local httpService = game:GetService("HttpService")
 
--- 功能狀態變量
-_G.XuanCongUILoaded = true
-local isFastAttackOn = false
-local isPiScriptOn = false
-
--- 功能系統
-local fastAttackSystem = nil
+print("✅ 服務加載完成")
 
 -- ========================
--- 創建ScreenGui
+-- 創建主UI ScreenGui
 -- ========================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "XuanCongScript_Snow"
+screenGui.Name = "XuanCongScript_Optimized"
 screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.DisplayOrder = 999
-screenGui.IgnoreGuiInset = true
+screenGui.IgnoreGuiInset = false
 
-_G.XuanCongUIInstance = screenGui
-
-print("✅ ScreenGui已創建")
+print("✅ ScreenGui創建完成")
 
 -- ========================
--- 創建主框架
+-- 創建左側固定設置按鈕（左上角）
+-- ========================
+print("⚙️ 創建左側設置按鈕...")
+
+local sidebarButton = Instance.new("TextButton")
+sidebarButton.Name = "SidebarButton"
+sidebarButton.Size = UDim2.new(0, 45, 0, 45)
+sidebarButton.Position = UDim2.new(0, 15, 0, 15)
+sidebarButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+sidebarButton.BackgroundTransparency = 0.1
+sidebarButton.BorderSizePixel = 0
+sidebarButton.Text = "⚙️"
+sidebarButton.TextColor3 = Color3.fromRGB(200, 230, 255)
+sidebarButton.Font = Enum.Font.GothamBold
+sidebarButton.TextSize = 18
+sidebarButton.AutoButtonColor = true
+sidebarButton.ZIndex = 1000
+sidebarButton.Parent = screenGui
+
+-- 圓角
+local sidebarCorner = Instance.new("UICorner")
+sidebarCorner.CornerRadius = UDim.new(0, 10)
+sidebarCorner.Parent = sidebarButton
+
+-- 邊框
+local sidebarStroke = Instance.new("UIStroke")
+sidebarStroke.Color = Color3.fromRGB(100, 150, 200)
+sidebarStroke.Thickness = 2
+sidebarStroke.Parent = sidebarButton
+
+-- 添加陰影效果
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.5
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.ZIndex = 999
+shadow.Parent = sidebarButton
+
+-- 懸停提示
+local buttonHint = Instance.new("TextLabel")
+buttonHint.Name = "ButtonHint"
+buttonHint.Size = UDim2.new(0, 100, 0, 25)
+buttonHint.Position = UDim2.new(0, 55, 0, 10)
+buttonHint.BackgroundColor3 = Color3.fromRGB(30, 40, 60)
+buttonHint.BackgroundTransparency = 0.2
+buttonHint.Text = "開啟玄丛腳本"
+buttonHint.TextColor3 = Color3.fromRGB(200, 230, 255)
+buttonHint.Font = Enum.Font.Gotham
+buttonHint.TextSize = 11
+buttonHint.TextXAlignment = Enum.TextXAlignment.Center
+buttonHint.Visible = false
+buttonHint.ZIndex = 999
+buttonHint.Parent = screenGui
+
+local hintCorner = Instance.new("UICorner")
+hintCorner.CornerRadius = UDim.new(0, 6)
+hintCorner.Parent = buttonHint
+
+-- 懸停效果
+sidebarButton.MouseEnter:Connect(function()
+    buttonHint.Visible = true
+    sidebarStroke.Color = Color3.fromRGB(150, 200, 255)
+    sidebarButton.BackgroundColor3 = Color3.fromRGB(50, 70, 100)
+end)
+
+sidebarButton.MouseLeave:Connect(function()
+    buttonHint.Visible = false
+    sidebarStroke.Color = Color3.fromRGB(100, 150, 200)
+    sidebarButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+end)
+
+print("✅ 左側設置按鈕創建完成")
+
+-- ========================
+-- 創建主框架（初始隱藏）
 -- ========================
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 260, 0, 180)
-mainFrame.Position = UDim2.new(0.5, -130, 0.5, -90)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 35, 50)  -- 改為冬日藍色調
+mainFrame.Size = UDim2.new(0, 240, 0, 160)
+mainFrame.Position = UDim2.new(0.5, -120, 0.5, -80)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 35, 50)
 mainFrame.BackgroundTransparency = 0.1
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = true
-mainFrame.ClipsDescendants = true  -- 讓雪花不會超出邊界
+mainFrame.Visible = false
+mainFrame.Active = true
 mainFrame.Parent = screenGui
 
 -- 圓角
 local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.CornerRadius = UDim.new(0, 8)
 uiCorner.Parent = mainFrame
 
--- 邊框和陰影效果
+-- 邊框
 local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(100, 150, 200)  -- 冰藍色邊框
+uiStroke.Color = Color3.fromRGB(100, 150, 200)
 uiStroke.Thickness = 2
 uiStroke.Parent = mainFrame
 
--- 背景漸變 (冬日主題)
-local bgGradient = Instance.new("UIGradient")
-bgGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 40, 60)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(35, 45, 70)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 35, 55))
-})
-bgGradient.Rotation = 45
-bgGradient.Parent = mainFrame
-
-print("✅ 主框架已創建")
+print("✅ 主框架創建完成")
 
 -- ========================
--- 雪花飄落系統
+-- 修復的拖動系統
 -- ========================
-print("❄️ 初始化雪花系統...")
+print("🔄 設置拖動系統...")
 
-local snowflakes = {}
-local snowTypes = {
-    {symbol = "❄️", size = 18, speed = 25, sway = 0.2, spin = 1.5},
-    {symbol = "❄️", size = 16, speed = 30, sway = 0.3, spin = 2},
-    {symbol = "＊", size = 14, speed = 35, sway = 0.4, spin = -1.8},
-    {symbol = "✱", size = 12, speed = 40, sway = 0.5, spin = 2.5}
-}
+-- 創建拖動標題欄
+local dragButton = Instance.new("TextButton")
+dragButton.Name = "DragButton"
+dragButton.Size = UDim2.new(1, 0, 0, 35)
+dragButton.Position = UDim2.new(0, 0, 0, 0)
+dragButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+dragButton.BackgroundTransparency = 0.2
+dragButton.BorderSizePixel = 0
+dragButton.Text = "❄️ 玄丛腳本 (拖動我)"
+dragButton.TextColor3 = Color3.fromRGB(200, 230, 255)
+dragButton.Font = Enum.Font.GothamBold
+dragButton.TextSize = 14
+dragButton.AutoButtonColor = false
+dragButton.Parent = mainFrame
 
--- 創建初始雪花
-for i = 1, 12 do
-    local snowType = snowTypes[math.random(1, #snowTypes)]
-    
-    local snowflake = Instance.new("TextLabel")
-    snowflake.Name = "Snowflake_" .. i
-    snowflake.Size = UDim2.new(0, snowType.size, 0, snowType.size)
-    
-    -- 隨機起始位置 (從頂部開始)
-    local startX = math.random(-20, 240)
-    local startY = math.random(-30, -10)
-    
-    snowflake.Position = UDim2.new(0, startX, 0, startY)
-    snowflake.BackgroundTransparency = 1
-    snowflake.Text = snowType.symbol
-    snowflake.TextColor3 = Color3.fromRGB(180, 220, 255)
-    snowflake.Font = Enum.Font.SourceSansBold
-    snowflake.TextSize = snowType.size - 4
-    snowflake.ZIndex = 0
-    snowflake.Parent = mainFrame
-    
-    table.insert(snowflakes, {
-        object = snowflake,
-        speed = snowType.speed * (0.8 + math.random() * 0.4),
-        sway = snowType.sway * (0.5 + math.random() * 1),
-        spinSpeed = snowType.spin * (0.5 + math.random()),
-        swayOffset = math.random() * math.pi * 2,
-        floatPhase = math.random() * math.pi * 2,
-        transparency = 0.4 + math.random() * 0.4
-    })
-end
+local dragCorner = Instance.new("UICorner")
+dragCorner.CornerRadius = UDim.new(0, 8, 0, 0)
+dragCorner.Parent = dragButton
 
--- 雪花動畫連接
-local snowAnimation
-snowAnimation = runService.Heartbeat:Connect(function(deltaTime)
-    local time = tick()
-    
-    for i, snowData in ipairs(snowflakes) do
-        if snowData.object and snowData.object.Parent then
-            local flake = snowData.object
-            
-            -- 當前位置
-            local currentX = flake.Position.X.Offset
-            local currentY = flake.Position.Y.Offset
-            
-            -- 下落
-            local newY = currentY + snowData.speed * deltaTime
-            
-            -- 左右飄動
-            local swayX = math.sin(time * 1.5 + snowData.swayOffset) * snowData.sway * 20
-            local newX = currentX + swayX
-            
-            -- 旋轉
-            flake.Rotation = flake.Rotation + snowData.spinSpeed
-            
-            -- 輕微浮動
-            local floatY = math.sin(time * 2 + snowData.floatPhase) * 2
-            
-            -- 邊界檢查
-            if newY > 190 then  -- 超出底部
-                newY = -20
-                newX = math.random(-20, 240)
-            end
-            
-            if newX < -30 then  -- 超出左邊
-                newX = 270
-            elseif newX > 270 then  -- 超出右邊
-                newX = -30
-            end
-            
-            -- 應用新位置
-            flake.Position = UDim2.new(0, newX, 0, newY + floatY)
-            
-            -- 透明度變化 (輕微閃爍)
-            local alpha = snowData.transparency + 0.2 * math.sin(time * 1.2 + snowData.floatPhase)
-            flake.TextTransparency = alpha
-        end
-    end
-end)
-
--- ========================
--- 標題欄
--- ========================
-local titleBar = Instance.new("Frame")
-titleBar.Name = "TitleBar"
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.Position = UDim2.new(0, 0, 0, 0)
-titleBar.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-titleBar.BackgroundTransparency = 0.2
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-
--- 標題欄圓角
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 10)
-titleCorner.Parent = titleBar
-
--- 標題欄漸變效果
-local titleGradient = Instance.new("UIGradient")
-titleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 70, 100)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(60, 90, 140)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 60, 90))
-})
-titleGradient.Parent = titleBar
-
--- 標題文字
-local titleText = Instance.new("TextLabel")
-titleText.Name = "TitleText"
-titleText.Size = UDim2.new(0.6, 0, 1, 0)
-titleText.Position = UDim2.new(0, 15, 0, 0)
-titleText.BackgroundTransparency = 1
-titleText.Text = "❄️ 玄丛腳本 秦始皇創作"
-titleText.TextColor3 = Color3.fromRGB(200, 230, 255)
-titleText.Font = Enum.Font.GothamBold
-titleText.TextSize = 16
-titleText.TextXAlignment = Enum.TextXAlignment.Left
-titleText.Parent = titleBar
-
--- ========================
--- 關閉按鈕
--- ========================
+-- 關閉按鈕（使用 ❌️ 圖標）
 local closeButton = Instance.new("TextButton")
 closeButton.Name = "CloseButton"
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -40, 0.5, -15)
+closeButton.Size = UDim2.new(0, 28, 0, 28)
+closeButton.Position = UDim2.new(1, -32, 0, 4)
 closeButton.BackgroundColor3 = Color3.fromRGB(220, 100, 100)
+closeButton.BackgroundTransparency = 0.2
 closeButton.BorderSizePixel = 0
-closeButton.Text = "X"
+closeButton.Text = "❌️"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.Font = Enum.Font.GothamBold
 closeButton.TextSize = 16
 closeButton.AutoButtonColor = true
-closeButton.Parent = titleBar
+closeButton.ZIndex = 2
+closeButton.Parent = dragButton
 
--- 關閉按鈕圓角
 local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 6)
 closeCorner.Parent = closeButton
 
-print("✅ 標題欄已創建")
+-- 關閉按鈕懸停效果
+closeButton.MouseEnter:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+end)
 
--- ========================
--- 創建功能按鈕函數 (冬日風格)
--- ========================
-local function createFeatureButton(parent, name, text, icon, yPosition, color)
-    local buttonFrame = Instance.new("Frame")
-    buttonFrame.Name = name .. "Frame"
-    buttonFrame.Size = UDim2.new(1, -20, 0, 36)
-    buttonFrame.Position = UDim2.new(0, 10, 0, yPosition)
-    buttonFrame.BackgroundColor3 = Color3.fromRGB(40, 50, 70)
-    buttonFrame.BackgroundTransparency = 0.3
-    buttonFrame.BorderSizePixel = 0
-    buttonFrame.ZIndex = 2  -- 確保在雪花之上
-    buttonFrame.Parent = parent
+closeButton.MouseLeave:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 100, 100)
+end)
+
+-- 修復的拖動變量
+local isDragging = false
+local dragStartPosition = Vector2.new(0, 0)
+local frameStartPosition = UDim2.new(0, 0, 0, 0)
+
+-- 修復的電腦拖動（使用正確的參數）
+dragButton.MouseButton1Down:Connect(function()
+    isDragging = true
+    dragStartPosition = inputService:GetMouseLocation()
+    frameStartPosition = mainFrame.Position
+    dragButton.BackgroundColor3 = Color3.fromRGB(60, 90, 140)
+    print("🖱️ 開始拖動")
+end)
+
+-- 使用 RenderStepped 來平滑拖動
+runService.RenderStepped:Connect(function()
+    if isDragging then
+        local currentMouse = inputService:GetMouseLocation()
+        local delta = currentMouse - dragStartPosition
+        
+        mainFrame.Position = UDim2.new(
+            frameStartPosition.X.Scale,
+            frameStartPosition.X.Offset + delta.X,
+            frameStartPosition.Y.Scale,
+            frameStartPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+inputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if isDragging then
+            isDragging = false
+            dragButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+            print("🖱️ 停止拖動")
+        end
+    end
+end)
+
+-- 手機拖動
+if isMobile then
+    print("📱 設置手機拖動系統...")
     
-    local frameCorner = Instance.new("UICorner")
-    frameCorner.CornerRadius = UDim.new(0, 8)
-    frameCorner.Parent = buttonFrame
+    local touchArea = Instance.new("TextButton")
+    touchArea.Name = "TouchArea"
+    touchArea.Size = UDim2.new(1, 25, 1, 25)
+    touchArea.Position = UDim2.new(0, -12, 0, -12)
+    touchArea.BackgroundTransparency = 1
+    touchArea.Text = ""
+    touchArea.ZIndex = -1
+    touchArea.Parent = dragButton
     
-    -- 冰晶邊框
-    local frameStroke = Instance.new("UIStroke")
-    frameStroke.Color = Color3.fromRGB(150, 200, 255)
-    frameStroke.Thickness = 1
-    frameStroke.Transparency = 0.5
-    frameStroke.Parent = buttonFrame
+    local touchStartPosition = Vector2.new(0, 0)
+    local touchFrameStart = UDim2.new(0, 0, 0, 0)
+    local touchDragging = false
     
-    -- 圖標
-    local iconLabel = Instance.new("TextLabel")
-    iconLabel.Name = name .. "Icon"
-    iconLabel.Size = UDim2.new(0, 28, 1, 0)
-    iconLabel.Position = UDim2.new(0, 8, 0, 0)
-    iconLabel.BackgroundTransparency = 1
-    iconLabel.Text = icon
-    iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    iconLabel.Font = Enum.Font.GothamBold
-    iconLabel.TextSize = 18
-    iconLabel.TextXAlignment = Enum.TextXAlignment.Center
-    iconLabel.ZIndex = 2
-    iconLabel.Parent = buttonFrame
+    -- 觸控開始
+    touchArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            touchDragging = true
+            touchStartPosition = input.Position
+            touchFrameStart = mainFrame.Position
+            dragButton.BackgroundColor3 = Color3.fromRGB(60, 90, 140)
+        end
+    end)
     
-    -- 按鈕文字
-    local buttonText = Instance.new("TextLabel")
-    buttonText.Name = name .. "Text"
-    buttonText.Size = UDim2.new(0.5, 0, 1, 0)
-    buttonText.Position = UDim2.new(0, 45, 0, 0)
-    buttonText.BackgroundTransparency = 1
-    buttonText.Text = text
-    buttonText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    buttonText.Font = Enum.Font.Gotham
-    buttonText.TextSize = 14
-    buttonText.TextXAlignment = Enum.TextXAlignment.Left
-    buttonText.ZIndex = 2
-    buttonText.Parent = buttonFrame
+    -- 觸控移動
+    inputService.InputChanged:Connect(function(input)
+        if touchDragging and input.UserInputType == Enum.UserInputType.Touch then
+            local currentTouch = input.Position
+            local delta = currentTouch - touchStartPosition
+            
+            mainFrame.Position = UDim2.new(
+                touchFrameStart.X.Scale,
+                touchFrameStart.X.Offset + delta.X,
+                touchFrameStart.Y.Scale,
+                touchFrameStart.Y.Offset + delta.Y
+            )
+        end
+    end)
     
-    -- 開關按鈕
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Name = name .. "Button"
-    toggleBtn.Size = UDim2.new(0, 60, 0, 26)
-    toggleBtn.Position = UDim2.new(1, -68, 0.5, -13)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(80, 100, 140)
-    toggleBtn.BorderSizePixel = 0
-    toggleBtn.Text = "關閉"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.TextSize = 12
-    toggleBtn.AutoButtonColor = true
-    toggleBtn.ZIndex = 2
-    toggleBtn.Parent = buttonFrame
-    
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = toggleBtn
-    
-    return toggleBtn, buttonFrame
+    -- 觸控結束
+    inputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            if touchDragging then
+                touchDragging = false
+                dragButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+            end
+        end
+    end)
 end
+
+print("✅ 拖動系統已設置")
 
 -- ========================
 -- 創建功能按鈕
 -- ========================
-local fastAttackBtn = createFeatureButton(mainFrame, "FastAttack", "快速攻擊", "⚡", 50, Color3.fromRGB(0, 150, 220))
-local piScriptBtn = createFeatureButton(mainFrame, "PiScript", "皮腳本", "🅿️", 96, Color3.fromRGB(220, 150, 50))
-local fastAttackBtn = createFeatureButton(mainFrame, "FastAttack", "自動v4", "", 50, Color3.fromRGB(0, 150, 220))
+local function createButton(text, icon, yPos, color)
+    local button = Instance.new("TextButton")
+    button.Name = text
+    button.Size = UDim2.new(1, -20, 0, 32)
+    button.Position = UDim2.new(0, 10, 0, yPos)
+    button.BackgroundColor3 = color
+    button.BackgroundTransparency = 0.3
+    button.BorderSizePixel = 0
+    button.Text = icon .. " " .. text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 13
+    button.AutoButtonColor = true
+    button.Active = true
+    button.Parent = mainFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
+    
+    return button
+end
+
+-- 創建按鈕
+local fastAttackBtn = createButton("快速攻擊", "⚡", 40, Color3.fromRGB(0, 150, 220))
+local piScriptBtn = createButton("皮腳本", "🅿️", 78, Color3.fromRGB(220, 150, 50))
 
 print("✅ 功能按鈕創建完成")
 
 -- ========================
--- 簡單通知系統
+-- 添加作者信息
+-- ========================
+local authorLabel = Instance.new("TextLabel")
+authorLabel.Name = "AuthorLabel"
+authorLabel.Size = UDim2.new(1, -20, 0, 18)
+authorLabel.Position = UDim2.new(0, 10, 0, 122)
+authorLabel.BackgroundTransparency = 1
+authorLabel.Text = "👑 秦始皇创作"
+authorLabel.TextColor3 = Color3.fromRGB(180, 180, 220)
+authorLabel.Font = Enum.Font.Gotham
+authorLabel.TextSize = 10
+authorLabel.TextXAlignment = Enum.TextXAlignment.Center
+authorLabel.Parent = mainFrame
+
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Name = "VersionLabel"
+versionLabel.Size = UDim2.new(1, -20, 0, 14)
+versionLabel.Position = UDim2.new(0, 10, 0, 140)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "❄️ 玄丛腳本 v6.0"
+versionLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
+versionLabel.Font = Enum.Font.Gotham
+versionLabel.TextSize = 9
+versionLabel.TextXAlignment = Enum.TextXAlignment.Center
+versionLabel.Parent = mainFrame
+
+-- ========================
+-- 右下角通知系統
 -- ========================
 local function showNotification(message, color, duration)
-    duration = duration or 2
-    
-    local notifyGui = Instance.new("ScreenGui")
-    notifyGui.Name = "SimpleNotification"
-    notifyGui.Parent = playerGui
-    notifyGui.DisplayOrder = 1000
-    notifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    duration = duration or 2.5
     
     local notifyFrame = Instance.new("Frame")
-    notifyFrame.Parent = notifyGui
-    notifyFrame.BackgroundColor3 = color or Color3.fromRGB(50, 150, 200)
-    notifyFrame.Size = UDim2.new(0, 200, 0, 60)
-    notifyFrame.Position = UDim2.new(1, -10, 0, 10)
-    notifyFrame.AnchorPoint = Vector2.new(1, 0)
+    notifyFrame.Name = "Notify_" .. tick()
+    notifyFrame.Size = UDim2.new(0, 220, 0, 60)
+    notifyFrame.Position = UDim2.new(1, 230, 1, -70)
+    notifyFrame.AnchorPoint = Vector2.new(1, 1)
+    notifyFrame.BackgroundColor3 = color or Color3.fromRGB(40, 60, 90)
+    notifyFrame.BackgroundTransparency = 0.2
+    notifyFrame.BorderSizePixel = 0
+    notifyFrame.ZIndex = 10000
+    notifyFrame.Parent = screenGui
     
-    local notifyCorner = Instance.new("UICorner")
-    notifyCorner.CornerRadius = UDim.new(0, 8)
-    notifyCorner.Parent = notifyFrame
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = notifyFrame
     
-    local notifyStroke = Instance.new("UIStroke")
-    notifyStroke.Parent = notifyFrame
-    notifyStroke.Color = Color3.fromRGB(255, 255, 255)
-    notifyStroke.Thickness = 1.5
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(150, 200, 255)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = notifyFrame
     
-    local notifyText = Instance.new("TextLabel")
-    notifyText.Parent = notifyFrame
-    notifyText.BackgroundTransparency = 1
-    notifyText.Size = UDim2.new(1, -16, 1, -16)
-    notifyText.Position = UDim2.new(0, 8, 0, 8)
-    notifyText.Text = message
-    notifyText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    notifyText.Font = Enum.Font.GothamBold
-    notifyText.TextSize = 12
-    notifyText.TextWrapped = true
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -20, 1, -20)
+    textLabel.Position = UDim2.new(0, 10, 0, 10)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = message
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.Gotham
+    textLabel.TextSize = 12
+    textLabel.TextWrapped = true
+    textLabel.Parent = notifyFrame
     
-    task.wait(duration)
+    print("📢 通知: " .. message)
     
-    notifyGui:Destroy()
+    local slideIn = tweenService:Create(notifyFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -15, 1, -70)
+    })
+    slideIn:Play()
+    
+    task.spawn(function()
+        task.wait(duration)
+        
+        if notifyFrame and notifyFrame.Parent then
+            local slideOut = tweenService:Create(notifyFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, 230, 1, -70)
+            })
+            slideOut:Play()
+            
+            slideOut.Completed:Wait()
+            notifyFrame:Destroy()
+        end
+    end)
+    
+    return notifyFrame
 end
 
 -- ========================
--- 快速攻擊系統
+-- 你的快速攻擊代碼（替換版）
 -- ========================
-local function initializeFastAttack()
-    print("⚡ 初始化快速攻擊系統...")
-    
-    _G.FastAttack = true
-    
+print("⚡ 初始化快速攻擊系統（新版）...")
+
+local isFastAttackOn = false
+local fastAttackModule = nil
+
+_G.FastAttack = true
+
+local function setupFastAttack()
     if _G.FastAttack then
+        local _ENV = (getgenv or getrenv or getfenv)()
+
         local function SafeWaitForChild(parent, childName)
             local success, result = pcall(function()
                 return parent:WaitForChild(childName)
             end)
             if not success or not result then
-                warn("無法找到: " .. childName)
+                warn("noooooo: " .. childName)
             end
             return result
         end
 
+        local function WaitChilds(path, ...)
+            local last = path
+            for _, child in {...} do
+                last = last:FindFirstChild(child) or SafeWaitForChild(last, child)
+                if not last then break end
+            end
+            return last
+        end
+
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        local CollectionService = game:GetService("CollectionService")
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local TeleportService = game:GetService("TeleportService")
         local RunService = game:GetService("RunService")
         local Players = game:GetService("Players")
         local Player = Players.LocalPlayer
 
         if not Player then
-            warn("未找到本地玩家.")
+            warn("找不到本地玩家。")
             return nil
         end
 
@@ -416,27 +489,40 @@ local function initializeFastAttack()
         local CommF = SafeWaitForChild(Remotes, "CommF_")
         local CommE = SafeWaitForChild(Remotes, "CommE")
 
+        local ChestModels = SafeWaitForChild(workspace, "ChestModels")
         local WorldOrigin = SafeWaitForChild(workspace, "_WorldOrigin")
         local Characters = SafeWaitForChild(workspace, "Characters")
         local Enemies = SafeWaitForChild(workspace, "Enemies")
+        local Map = SafeWaitForChild(workspace, "Map")
+
+        local EnemySpawns = SafeWaitForChild(WorldOrigin, "EnemySpawns")
+        local Locations = SafeWaitForChild(WorldOrigin, "Locations")
+
+        local RenderStepped = RunService.RenderStepped
+        local Heartbeat = RunService.Heartbeat
+        local Stepped = RunService.Stepped
 
         local Modules = SafeWaitForChild(ReplicatedStorage, "Modules")
         local Net = SafeWaitForChild(Modules, "Net")
 
+        local sethiddenproperty = sethiddenproperty or function(...) return ... end
+        local setupvalue = setupvalue or (debug and debug.setupvalue)
+        local getupvalue = getupvalue or (debug and debug.getupvalue)
+
         local Settings = {
             AutoClick = true,
-            ClickDelay = 0.000000000000000000000000001
+            ClickDelay = 0.0000000000000000000001
         }
 
         local Module = {}
 
         Module.FastAttack = (function()
-            if getgenv().rz_FastAttack then
-                return getgenv().rz_FastAttack
+            if _ENV.rz_FastAttack then
+                return _ENV.rz_FastAttack
             end
 
             local FastAttack = {
-                Distance = 5000,
+                Distance = 1000,
                 attackMobs = true,
                 attackPlayers = true,
                 Equipped = nil
@@ -465,19 +551,8 @@ local function initializeFastAttack()
 
             function FastAttack:Attack(BasePart, OthersEnemies)
                 if not BasePart or #OthersEnemies == 0 then return end
-                if RegisterAttack and RegisterHit then
-                    local success1 = pcall(function()
-                        RegisterAttack:FireServer(Settings.ClickDelay or 0)
-                    end)
-                    
-                    local success2 = pcall(function()
-                        RegisterHit:FireServer(BasePart, OthersEnemies)
-                    end)
-                    
-                    if not success1 or not success2 then
-                        warn("快速攻擊遠程事件失敗")
-                    end
-                end
+                RegisterAttack:FireServer(Settings.ClickDelay or 0)
+                RegisterHit:FireServer(BasePart, OthersEnemies)
             end
 
             function FastAttack:AttackNearest()
@@ -500,32 +575,29 @@ local function initializeFastAttack()
                 end
             end
 
-            local attackLoop
-            local function startAttackLoop()
+            local attackLoop = nil
+            
+            function FastAttack:start()
+                print("▶️ 開始快速攻擊")
                 attackLoop = task.spawn(function()
                     while task.wait(Settings.ClickDelay) do
                         if Settings.AutoClick then
-                            FastAttack:BladeHits()
+                            self:BladeHits()
                         end
                     end
                 end)
             end
             
-            local function stopAttackLoop()
+            function FastAttack:stop()
+                print("⏹️ 停止快速攻擊")
                 if attackLoop then
                     task.cancel(attackLoop)
                     attackLoop = nil
                 end
             end
 
-            getgenv().rz_FastAttack = {
-                FastAttack = FastAttack,
-                start = startAttackLoop,
-                stop = stopAttackLoop,
-                Settings = Settings
-            }
-            
-            return getgenv().rz_FastAttack
+            _ENV.rz_FastAttack = FastAttack
+            return FastAttack
         end)()
         
         return Module.FastAttack
@@ -533,33 +605,28 @@ local function initializeFastAttack()
     return nil
 end
 
-local function startFastAttack()
-    print("⚡ 啟動快速攻擊功能")
+-- 初始化快速攻擊系統
+local function initFastAttack()
+    showNotification("⚡ 正在初始化快速攻擊...", Color3.fromRGB(255, 165, 0), 1)
     
-    if not fastAttackSystem then
-        fastAttackSystem = initializeFastAttack()
-    end
+    local success, result = pcall(function()
+        return setupFastAttack()
+    end)
     
-    if fastAttackSystem then
-        if fastAttackSystem.start then
-            fastAttackSystem.start()
-        end
-        return true
+    if success and result then
+        showNotification("✅ 快速攻擊初始化完成", Color3.fromRGB(0, 180, 0), 1.5)
+        print("✅ 快速攻擊系統就緒")
+        return result
     else
-        return false
-    end
-end
-
-local function stopFastAttack()
-    print("🛑 停止快速攻擊")
-    
-    if fastAttackSystem and fastAttackSystem.stop then
-        fastAttackSystem.stop()
+        local errMsg = result or "未知錯誤"
+        showNotification("⚠️ 快速攻擊初始化失敗\n錯誤: " .. tostring(errMsg), Color3.fromRGB(255, 0, 0), 2)
+        print("❌ 快速攻擊初始化失敗: " .. errMsg)
+        return nil
     end
 end
 
 -- ========================
--- 皮腳本功能 (修改為您要的格式)
+-- 皮腳本功能
 -- ========================
 local function executePiScript()
     print("🅿️ 正在嘗試執行皮腳本...")
@@ -615,595 +682,173 @@ end
 
 closeButton.MouseButton1Click:Connect(closeUI)
 closeButton.TouchTap:Connect(closeUI)
-
 -- ========================
--- 自動v4
+-- 功能按鈕事件
 -- ========================
-local toggleKey = "自动v4"
-local autoV4Task = nil
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local function getToggleState(key)
-    if not _G.ToggleStates then _G.ToggleStates = {} end
-    return _G.ToggleStates[key] or false
-end
-
-local function callAwakeningRemote()
-    local Backpack = LocalPlayer:FindFirstChild("Backpack")
-    if not Backpack then return end
+-- 快速攻擊按鈕
+fastAttackBtn.MouseButton1Click:Connect(function()
+    isFastAttackOn = not isFastAttackOn
     
-    local Awakening = Backpack:FindFirstChild("Awakening")
-    if not Awakening then return end
-    
-    local RemoteFunurn nil
-end
-
--- UI控件绑定
-attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.IsRunning = state
-		_G.FastAttack = state
-	end
-end)
-
-attackTab:Textbox("范围", "AttackRange", "10000", function(text)
-	local num = tonumber(text) or 10000
-	num = math.floor(math.clamp(num, 1, 10000))
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.Distance = num
-	end
-end)
-
-attackTab:Textbox("攻速", "ClickDelay", "0.1", function(text)
-	local num = tonumber(text) or 0.1
-	num = math.round(math.clamp(num, 0.01, 2) * 100) / 100
-	Settings.ClickDelay = num
-end)
-
-attackTab:Toggle("打怪", "AttackMobsToggle", true, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.attackMobs = state
-	end
-end)
-
-attackTab:Toggle("打人", "AttackPlayersToggle", true, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.attackPlayers = state
-	end
-end)
-
--- 组件恢复逻辑
-task.spawn(function()
-	while true do
-		task.wait(1)
-		if not _ENV.rz_FastAttack then
-			warn("⚠️ 快速攻击组件未完全加载，持续尝试恢复...")
-			while not _ENV.rz_FastAttack do
-				task.wait(0.5)
-				if _G.FastAttack then
-					local Remotes, Net, RegisterAttack, RegisterHit, Enemies = CheckAndGetCoreComponents()
-					Module.FastAttack = Module.FastAttack or (function()
-						local FastAttack = {
-							Distance=2500,
-							attackMobs=true,
-							attackPlayers=true,
-							Equipped=nil,
-							IsRunning=_G.FastAttack,
-							consecutiveFailures=0,
-							maxConsecutiveFailures=5
-						}
-
-						local function ProcessEnemies(OthersEnemies, Folder)
-							if not Folder or not FastAttack.attackMobs then return nil end
-							local BasePart = nil
-							for _, Enemy in Folder:GetChildren() do
-								if Enemy == Player.Character or not IsAlive(Enemy) then continue end
-								local foundPart = GetRandomValidPart(Enemy)
-								if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-									table.insert(OthersEnemies, {Enemy, foundPart})
-									BasePart = foundPart
-								end
-							end
-							return BasePart
-						end
-
-						local function ProcessRealPlayers(OthersEnemies)
-							if not FastAttack.attackPlayers then return nil end
-							local BasePart = nil
-							for _, OtherPlayer in Players:GetPlayers() do
-								if OtherPlayer == Player then continue end
-								local OtherChar = OtherPlayer.Character
-								if not IsAlive(OtherChar) then continue end
-								local foundPart = GetRandomValidPart(OtherChar)
-								if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-									table.insert(OthersEnemies, {OtherChar, foundPart})
-									BasePart = foundPart
-								end
-							end
-							return BasePart
-						end
-
-						function FastAttack:Attack(BasePart, OthersEnemies)
-							local _, Net, temp_RegisterAttack, temp_RegisterHit, _ = CheckAndGetCoreComponents()
-							if not (BasePart and OthersEnemies and #OthersEnemies > 0 and temp_RegisterAttack and temp_RegisterHit) then
-								self.consecutiveFailures = self.consecutiveFailures + 1
-								if self.consecutiveFailures >= self.maxConsecutiveFailures then
-									self.consecutiveFailures = 0
-									self.Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-								end
-								task.delay(0.5, function() self:AttackNearest() end)
-								return
-							end
-							self.consecutiveFailures = 0
-							temp_RegisterAttack:FireServer(Settings.ClickDelay or 0)
-							temp_RegisterHit:FireServer(BasePart, OthersEnemies)
-						end
-
-						function FastAttack:AttackNearest()
-							if not self.IsRunning then return end
-							local _, _, _, _, Enemies = CheckAndGetCoreComponents()
-							local OthersEnemies = {}
-							local Part1 = ProcessEnemies(OthersEnemies, Enemies)
-							local Part2 = ProcessRealPlayers(OthersEnemies)
-							if #OthersEnemies > 0 then
-								self:Attack(Part1 or Part2, OthersEnemies)
-							end
-						end
-
-						function FastAttack:BladeHits()
-							local Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-							if Equipped and Equipped.ToolTip ~= "Gun" then
-								self:AttackNearest()
-							end
-						end
-
-						task.spawn(function()
-							while true do
-								task.wait(Settings.ClickDelay)
-								if Settings.AutoClick and FastAttack.IsRunning then
-									FastAttack:BladeHits()
-								else
-									task.wait(0.1)
-								end
-							end
-						end)
-
-						_ENV.rz_FastAttack = FastAttack
-						return FastAttack
-					end)()
-				end
-			end
-		end
-	end
-end)
-
-
--- 移速功能
-
-attackTab:Textbox("速度", "TranslateAccelSpeed", "输入速度值", function(Value)
-    local speed = tonumber(Value)
-    if speed then
-        getfenv().translateSpeed = speed
-    end
-end)
-
-attackTab:Toggle("加速开关", "TranslateAccelToggle", false, function(State)
-    getfenv().translateAccelEnabled = State
-    
-    if State then
-        if getfenv().sudu then
-            getfenv().sudu:Disconnect()
-            getfenv().sudu = nil
-        end
+    if isFastAttackOn then
+        fastAttackBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
+        fastAttackBtn.Text = "開啟"
         
-        getfenv().translateConnection = game:GetService("RunService").Heartbeat:Connect(function()
-            if game:GetService("Players").LocalPlayer.Character and 
-               game:GetService("Players").LocalPlayer.Character.Humanoid and 
-               game:GetService("Players").LocalPlayer.Character.Humanoid.Parent then
-               
-                local humanoid = game:GetService("Players").LocalPlayer.Character.Humanoid
-                
-                if humanoid.MoveDirection.Magnitude > 0 then
-                    local moveDirection = humanoid.MoveDirection
-                    local acceleration = moveDirection * (getfenv().translateSpeed or 50) / 30
-                    
-                    game:GetService("Players").LocalPlayer.Character:TranslateBy(acceleration)
-                end
-            end
-        end)
-    else
-        if getfenv().translateConnection then
-            getfenv().translateConnection:Disconnect()
-            getfenv().translateConnection = nil
-        end
-    end
-end)
-
--- 透视功能
-local about = UITab4:section("透视",true)
-
-
-local ESPConfig = {
-    MainSwitch = false,     
-    ShowNameDistance = false, 
-    ShowTracer = false,       
-    ShowHealth = false        
-}
-
-local ESPElements = {}
-
-local function CleanupPlayerESP(player)
-    if not ESPElements[player.UserId] then return end
-    
-    if ESPElements[player.UserId].NameHealthESP then
-        ESPElements[player.UserId].NameHealthESP:Destroy()
-        ESPElements[player.UserId].NameHealthESP = nil
-    end
-    if ESPElements[player.UserId].NameHealthUpdateConn then
-        ESPElements[player.UserId].NameHealthUpdateConn:Disconnect()
-        ESPElements[player.UserId].NameHealthUpdateConn = nil
-    end
-    
-    if ESPElements[player.UserId].Tracer then
-        ESPElements[player.UserId].Tracer:Remove()
-        ESPElements[player.UserId].Tracer = nil
-    end
-    if ESPElements[player.UserId].TracerConn then
-        ESPElements[player.UserId].TracerConn:Disconnect()
-        ESPElements[player.UserId].TracerConn = nil
-    end
-end
-
-local function CreateNameDistanceHealthESP(player)
-    if not player.Character or not player.Character:FindFirstChild("Head") then return end
-    local head = player.Character.Head
-    
-    if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then
-        ESPElements[player.UserId].NameHealthESP:Destroy()
-    end
-    
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "NameDistanceHealthESP"
-    billboardGui.Adornee = head -- 绑定到玩家头部
-    billboardGui.Size = UDim2.new(0, 120, 0, 50) -- 面板大小
-    billboardGui.StudsOffset = Vector3.new(0, 3.5, 0) -- 面板偏移
-    billboardGui.AlwaysOnTop = true -- 显示在最上层
-    billboardGui.Parent = head
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Parent = billboardGui
-    nameLabel.BackgroundTransparency = 1 -- 背景透明
-    nameLabel.Text = player.Name -- 显示玩家名字
-    nameLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- 名字颜色 纯白色
-    nameLabel.TextScaled = true 
-    nameLabel.Font = Enum.Font.GothamSemibold -- 字体 加粗哥特字体
-    
-    local healthLabel = Instance.new("TextLabel")
-    healthLabel.Parent = billboardGui
-    healthLabel.BackgroundTransparency = 1 -- 背景透明
-    healthLabel.Position = UDim2.new(0, 0, 0.33, 0) -- 位于名字标签下方
-    healthLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    healthLabel.TextColor3 = Color3.new(0, 1, 0) -- 初始血量颜色 绿色
-    healthLabel.TextScaled = true 
-    healthLabel.Font = Enum.Font.Gotham -- 字体：普通哥特字体
-    
-    local distanceLabel = Instance.new("TextLabel")
-    distanceLabel.Parent = billboardGui
-    distanceLabel.BackgroundTransparency = 1 -- 背景透明
-    distanceLabel.Position = UDim2.new(0, 0, 0.66, 0) -- 位于血量标签下方
-    distanceLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    distanceLabel.TextColor3 = Color3.new(1, 0.5, 0) -- 距离颜色 橙色
-    distanceLabel.TextScaled = true -- 自动缩放文本大小
-    distanceLabel.Font = Enum.Font.Gotham -- 字体：普通哥特字体
-    
-    local updateConnection = RunService.RenderStepped:Connect(function()
-        if not billboardGui.Parent or not LocalPlayer.Character or not player.Character then 
-            return 
-        end
-        
-        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-        if localRoot and targetRoot then
-            local distance = (localRoot.Position - targetRoot.Position).Magnitude
-            distanceLabel.Text = string.format("%.1f米", distance)   
-        end
-        
-        local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            local health = math.floor(humanoid.Health) -- 当前血量
-            local maxHealth = math.floor(humanoid.MaxHealth) -- 最大血量
+        -- 攻擊時添加特效雪花
+        for i = 1, 3 do
+            local snowType = snowTypes[math.random(1, #snowTypes)]
+            local snowflake = Instance.new("TextLabel")
+            snowflake.Size = UDim2.new(0, snowType.size, 0, snowType.size)
+            snowflake.Position = UDim2.new(0, math.random(0, 220), 0, -20)
+            snowflake.BackgroundTransparency = 1
+            snowflake.Text = snowType.symbol
+            snowflake.TextColor3 = Color3.fromRGB(100, 200, 255)
+            snowflake.Font = Enum.Font.SourceSansBold
+            snowflake.TextSize = snowType.size - 4
+            snowflake.ZIndex = 0
+            snowflake.Parent = mainFrame
             
-            local healthPercent = health / maxHealth
-            if healthPercent > 0.7 then
-                healthLabel.TextColor3 = Color3.new(0, 1, 0) -- 健康状态：绿色
-            elseif healthPercent > 0.3 then
-                healthLabel.TextColor3 = Color3.new(1, 1, 0) -- 警告状态：黄色
-            else
-                healthLabel.TextColor3 = Color3.new(1, 0, 0) -- 危险状态：红色
-            end
-            
-            healthLabel.Text = string.format("血量: %d/%d", health, maxHealth)
-        end
-    end)
-    
-    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
-    ESPElements[player.UserId].NameHealthESP = billboardGui
-    ESPElements[player.UserId].NameHealthUpdateConn = updateConnection
-end
-
-local function CreateTracerESP(player)
-    if ESPElements[player.UserId] and ESPElements[player.UserId].Tracer then
-        ESPElements[player.UserId].Tracer:Remove()
-    end
-    
-    local tracer = Drawing.new("Line")
-    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：鲜红色
-    tracer.Thickness = 2 -- 射线粗细：2像素
-    tracer.Transparency = 0.8 -- 射线透明度：80%（半透明效果）
-    tracer.Visible = false -- 初始隐藏
-    
-    local renderConnection = RunService.RenderStepped:Connect(function()
-        if not ESPConfig.MainSwitch or not ESPConfig.ShowTracer then
-            tracer.Visible = false
-            return
+            table.insert(snowflakes, {
+                object = snowflake,
+                speed = snowType.speed * (1.2 + math.random() * 0.3),
+                sway = snowType.sway * (0.8 + math.random() * 0.5),
+                spinSpeed = snowType.spin * (0.8 + math.random()),
+                swayOffset = math.random() * math.pi * 2,
+                floatPhase = math.random() * math.pi * 2,
+                transparency = 0.3 + math.random() * 0.3
+            })
         end
         
-        local localChar = LocalPlayer.Character
-        local targetChar = player.Character
-        if not localChar or not targetChar then
-            tracer.Visible = false
-            return
-        end
-        
-        local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
-        if targetRoot then
-            local screenPos, isVisible = Camera:WorldToViewportPoint(targetRoot.Position)
-            if isVisible then
-                tracer.Visible = true
-                tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                tracer.To = Vector2.new(screenPos.X, screenPos.Y)
-            else
-                tracer.Visible = false
-            end
+        local success = startFastAttack()
+        if success then
+            showNotification("⚡ 快速攻擊已開啟", Color3.fromRGB(0, 180, 0), 2)
         else
-            tracer.Visible = false
-        end
-    end)
-    
-    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
-    ESPElements[player.UserId].Tracer = tracer
-    ESPElements[player.UserId].TracerConn = renderConnection
-end
-
-local function UpdatePlayerESP(player)
-    if player == LocalPlayer then return end
-    
-    if not player.Character then
-        CleanupPlayerESP(player)
-        return
-    end
-    
-    if not player.Character:FindFirstChild("Head") or not player.Character:FindFirstChild("HumanoidRootPart") then
-        CleanupPlayerESP(player)
-        return
-    end
-    
-    if ESPConfig.MainSwitch then
-        CreateTracerESP(player)
-        
-        if ESPConfig.ShowNameDistance or ESPConfig.ShowHealth then
-            CreateNameDistanceHealthESP(player)
-        else
-            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then
-                ESPElements[player.UserId].NameHealthESP:Destroy()
-                ESPElements[player.UserId].NameHealthESP = nil
-            end
-            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthUpdateConn then
-                ESPElements[player.UserId].NameHealthUpdateConn:Disconnect()
-                ESPElements[player.UserId].NameHealthUpdateConn = nil
-            end
+            showNotification("❌ 快速攻擊初始化失敗", Color3.fromRGB(180, 0, 0), 2)
+            fastAttackBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+            fastAttackBtn.Text = "關閉"
+            isFastAttackOn = false
         end
     else
-        CleanupPlayerESP(player)
+        fastAttackBtn.BackgroundColor3 = Color3.fromRGB(80, 100, 140)
+        fastAttackBtn.Text = "關閉"
+        stopFastAttack()
+        showNotification("🛑 快速攻擊已關閉", Color3.fromRGB(180, 0, 0), 2)
     end
-end
+end)
 
-local function UpdateAllESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            UpdatePlayerESP(player)
+-- 皮腳本按鈕
+piScriptBtn.MouseButton1Click:Connect(function()
+    isPiScriptOn = not isPiScriptOn
+    
+    if isPiScriptOn then
+        piScriptBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        piScriptBtn.Text = "開啟"
+        
+        -- 直接執行 loadstring(game:HttpGet(...))()
+        local success = executePiScript()
+        
+        if success then
+            piScriptBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
+            piScriptBtn.Text = "已加載"
+        else
+            piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+            piScriptBtn.Text = "失敗"
+            isPiScriptOn = false
+            
+            task.wait(3)
+            piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
+            piScriptBtn.Text = "關閉"
+        end
+    else
+        piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
+        piScriptBtn.Text = "關閉"
+        showNotification("🅿️ 皮腳本已關閉", Color3.fromRGB(180, 0, 0), 2)
+    end
+end)
+
+-- ========================
+-- 拖移功能
+-- ========================
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+inputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+inputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- ========================
+-- 緊急關閉功能（按ESC鍵）
+-- ========================
+inputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Escape then
+        closeUI()
+    end
+end)
+
+-- ========================
+-- 隨機添加雪花
+-- ========================
+task.spawn(function()
+    while task.wait(math.random(2, 4)) do
+        if #snowflakes < 20 then
+            local snowType = snowTypes[math.random(1, #snowTypes)]
+            local snowflake = Instance.new("TextLabel")
+            snowflake.Size = UDim2.new(0, snowType.size, 0, snowType.size)
+            snowflake.Position = UDim2.new(0, math.random(-20, 240), 0, -20)
+            snowflake.BackgroundTransparency = 1
+            snowflake.Text = snowType.symbol
+            snowflake.TextColor3 = Color3.fromRGB(180, 220, 255)
+            snowflake.Font = Enum.Font.SourceSansBold
+            snowflake.TextSize = snowType.size - 4
+            snowflake.ZIndex = 0
+            snowflake.Parent = mainFrame
+            
+            table.insert(snowflakes, {
+                object = snowflake,
+                speed = snowType.speed * (0.8 + math.random() * 0.4),
+                sway = snowType.sway * (0.5 + math.random() * 1),
+                spinSpeed = snowType.spin * (0.5 + math.random()),
+                swayOffset = math.random() * math.pi * 2,
+                floatPhase = math.random() * math.pi * 2,
+                transparency = 0.4 + math.random() * 0.4
+            })
         end
     end
-end
-
-local function HandlePlayerRespawn(player)
-    local character = player.Character
-    if not character then
-        character = player.CharacterAdded:Wait()
-    end
-    
-    local head = character:WaitForChild("Head", 5)
-    local rootPart = character:WaitForChild("HumanoidRootPart", 5)
-    local humanoid = character:WaitForChild("Humanoid", 5)
-    
-    if head and rootPart and humanoid then
-        task.wait(0.5)
-        UpdatePlayerESP(player)
-        task.wait(1)
-        UpdatePlayerESP(player)
-    end
-end
-
--- 处理新玩家加入
-Players.PlayerAdded:Connect(function(player)
-    if player == LocalPlayer then return end
-    
-    if player.Character then
-        task.spawn(HandlePlayerRespawn, player)
-    end
-    
-    player.CharacterAdded:Connect(function()
-        task.spawn(HandlePlayerRespawn, player)
-    end)
-    
-    player.CharacterRemoving:Connect(function()
-        CleanupPlayerESP(player)
-    end)
 end)
 
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1) 
-    UpdateAllESP()
-end)
+-- ========================
+-- 初始化完成
+-- ========================
+task.wait(0.5)
+showNotification("✅ 玄丛腳本 v3.1 已加載", Color3.fromRGB(50, 150, 200), 3)
 
-task.spawn(function()
-    while true do
-        task.wait(3) 
-        if ESPConfig.MainSwitch then
-            UpdateAllESP()
-        end
-    end
-end)
-
-about:Toggle("透视总开关", "ESP_Main", false, function(enabled)
-    ESPConfig.MainSwitch = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("显示玩家名字+距离", "ESP_NameDistance", false, function(enabled)
-    ESPConfig.ShowNameDistance = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("显示玩家血量", "ESP_Health", false, function(enabled)
-    ESPConfig.ShowHealth = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("射线追踪（屏幕中心）", "ESP_Tracer", false, function(enabled)
-    ESPConfig.ShowTracer = enabled
-    UpdateAllESP()
-end)
-
-
-
-local TP = UITab5:section("传送",false)
-
-
-TP:Button("传送至一海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
-end)
-
-TP:Button("传送至二海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
-end)
-
-TP:Button("传送至三海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
-end)
-
-local TP1 = UITab5:section("二海",false)
-TP1:Button("传送至天鹅的房间", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-287.37, 305.81, 592.98)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到豪宅:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至豪宅", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(2286.93, 15.06, 910.51)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到天鹅的房间:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至鬼船里", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-6501.06, 83.11, -123.52)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到鬼船里:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至鬼船外", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(922.78, 123.96, 32842.40)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到鬼船外:", targetPosition)
-    end
-end)
-local TP2 = UITab5:section("三海",false)
-
-TP2:Button("传送至海洋城堡", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-12463.60, 376.26, -7566.08)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到海洋城堡:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至海龟豪宅", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5060.41, 316.43, -3192.30)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到海龟豪宅:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至司法", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5096.48, 316.43, -3177.91)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到司法:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至九头蛇", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5027.03, 316.43, -3206.07)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到九头蛇:", targetPosition)
-    end
-end)
-
-
-
-
-task.spawn(function()
-    task.wait(2) 
-    UpdateAllESP()
-end)
-
-game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "下辈子脚本",
-	Text = "加载完成",
-	Duration = 5;
-})
+print("🎮 =================================")
+print("🎮 玄丛腳本 -秦始皇創作")
+print("🎮 功能：快速攻擊 + 皮腳本 + 雪花動畫")
+print("🎮 12片雪花正在飄落中...")
+print("🎮 皮腳本使用 loadstring(game:HttpGet(...))() 格式")
+print("🎮 UI將始終顯示，無法隱藏")
+print("🎮 按ESC鍵可關閉")
+print("🎮 =================================")
