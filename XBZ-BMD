@@ -34,7 +34,7 @@ else
     wait(2)
 
     game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Blox Fruits Script",
+        Title = "下辈子脚本",
         Text = "腳本加載完成！歡迎使用，" .. player.Name .. "！",
         Duration = 6,
         Icon = ""
