@@ -8,8 +8,8 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
         if method == "SetCore" and args[1] == "SendNotification" then
             local options = args[2]
             if type(options) == "table" and 
-               tostring(options.Title) == "零脚本" and 
-               tostring(options.Text) == "小轩制作" 
+               tostring(options.Title) == "XBZ脚本" and 
+               tostring(options.Text) == "YC制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -31,8 +31,8 @@ main.Start = returnnil
 
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "零脚本",
-	Text = "小轩制作",
+	Title = "XBZ脚本",
+	Text = "YC制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -43,16 +43,16 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/UI"))()  
-local win = ui:new("零中心")
+local win = ui:new("XBZ中心")
 local UITab1 = win:Tab("公告",'7734068321')
 local UITab2 = win:Tab("脚本",'7734068321')
-local UITab3 = win:Tab("秒杀",'7734068321')
+local UITab3 = win:Tab("范围",'7734068321')
 local UITab4 = win:Tab("透视",'7734068321')
 local UITab5 = win:Tab("传送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("小轩制作")
+about:Label("YC制作")
 about:Label("脚本测试中")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
@@ -124,7 +124,7 @@ end)
 
 -- 大佛功能区
 
-local attackTab = UITab3:section("秒杀",true)
+local attackTab = UITab3:section("范围",true)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
@@ -283,7 +283,7 @@ attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
 	end
 end)
 
-attackTab:Textbox("范围", "AttackRange", "10000", function(text)
+attackTab:Textbox("范围", "AttackRange", "5000", function(text)
 	local num = tonumber(text) or 10000
 	num = math.floor(math.clamp(num, 1, 10000))
 	if _ENV.rz_FastAttack then
@@ -291,7 +291,7 @@ attackTab:Textbox("范围", "AttackRange", "10000", function(text)
 	end
 end)
 
-attackTab:Textbox("攻速", "ClickDelay", "0.1", function(text)
+attackTab:Textbox("攻速", "ClickDelay", "0.2", function(text)
 	local num = tonumber(text) or 0.1
 	num = math.round(math.clamp(num, 0.01, 2) * 100) / 100
 	Settings.ClickDelay = num
@@ -839,7 +839,7 @@ task.spawn(function()
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "零脚本",
-	Text = "加载完成 祝您使用愉快",
+	Title = "XBZ脚本",
+	Text = "加载完成",
 	Duration = 5;
 })
