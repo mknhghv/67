@@ -43,7 +43,7 @@ local Camera = workspace.CurrentCamera
 local workspace = game:GetService("Workspace")  
 local Player = Players.LocalPlayer  
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/UI"))()  
-local win = ui:new("零中心")
+local win = ui:new("下辈子脚本")
 local UITab1 = win:Tab("公告",'7734068321')
 local UITab2 = win:Tab("脚本",'7734068321')
 local UITab3 = win:Tab("秒杀",'7734068321')
@@ -118,14 +118,6 @@ about:Button("飞行",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fly"))()
 end)
 
-about:Button("法天象地",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/法天像地"))()
-end)
-
-about:Button("redz",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/redz"))()
-end)
-
 about:Button("皮脚本",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/皮"))()
 end)
@@ -136,10 +128,6 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new(0,0))
     print("零域 | 已攔截掛機檢測，持續運行中...")
-end)
-
-about:Button("fps优化（关闭不了一点傻逼）",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fps优化"))()
 end)
 
 about:Button("hoho",function()
