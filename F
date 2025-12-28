@@ -628,227 +628,187 @@ end
 -- ========================
 -- 皮腳本功能
 -- ========================
+print("🔄 設置皮腳本功能...")
+
 local function executePiScript()
-    print("🅿️ 正在嘗試執行皮腳本...")
-    
     showNotification("🅿️ 正在加載皮腳本...", Color3.fromRGB(255, 165, 0), 2)
     
-    task.wait(1)
-    
-    -- 這就是您要的 loadstring(game:HttpGet(...))() 格式
     local success, err = pcall(function()
-        -- 直接執行遠程代碼
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+        return true
     end)
     
     if success then
-        print("✅ 皮腳本執行成功")
-        showNotification("✅ 皮腳本加載完成", Color3.fromRGB(0, 180, 0), 3)
+        showNotification("✅ 皮腳本加載成功！", Color3.fromRGB(0, 180, 0), 2)
+        print("✅ 皮腳本加載成功")
         return true
     else
-        print("❌ 皮腳本執行失敗: " .. tostring(err))
-        showNotification("❌ 加載失敗: " .. tostring(err), Color3.fromRGB(255, 0, 0), 3)
+        local errMsg = err or "未知錯誤"
+        showNotification("❌ 皮腳本加載失敗\n錯誤: " .. tostring(errMsg), Color3.fromRGB(255, 0, 0), 3)
+        print("❌ 皮腳本錯誤: " .. errMsg)
         return false
     end
 end
 
 -- ========================
--- 關閉UI功能
+-- UI顯示/隱藏功能
 -- ========================
-local function closeUI()
-    showNotification("🛑 正在關閉腳本...", Color3.fromRGB(220, 60, 60), 1)
+local isUIVisible = false
+
+-- 切換UI顯示狀態
+local function toggleUI()
+    isUIVisible = not isUIVisible
     
-    -- 停止雪花動畫
-    if snowAnimation then
-        snowAnimation:Disconnect()
-    end
-    
-    if isFastAttackOn then
-        stopFastAttack()
-        isFastAttackOn = false
-    end
-    
-    task.wait(0.5)
-    
-    if screenGui and screenGui.Parent then
-        screenGui:Destroy()
+    if isUIVisible then
+        -- 顯示UI
+        mainFrame.Visible = true
+        sidebarButton.Text = "📂"
+        sidebarButton.BackgroundColor3 = Color3.fromRGB(60, 90, 140)
+        buttonHint.Text = "關閉玄丛腳本"
         
-        _G.XuanCongUILoaded = false
-        _G.XuanCongUIInstance = nil
+        -- 動畫效果
+        mainFrame.Position = UDim2.new(0.5, -120, 0.5, -80)
+        mainFrame.BackgroundTransparency = 1
         
-        showNotification("✅ 腳本已關閉", Color3.fromRGB(0, 180, 0), 2)
+        local fadeIn = tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0.1
+        })
+        fadeIn:Play()
+        
+        showNotification("📱 玄丛腳本已開啟", Color3.fromRGB(50, 150, 200), 1.5)
+    else
+        -- 隱藏UI
+        sidebarButton.Text = "⚙️"
+        sidebarButton.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+        buttonHint.Text = "開啟玄丛腳本"
+        
+        local fadeOut = tweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1
+        })
+        fadeOut:Play()
+        
+        fadeOut.Completed:Wait()
+        mainFrame.Visible = false
+        
+        showNotification("📱 玄丛腳本已隱藏", Color3.fromRGB(150, 150, 150), 1.5)
     end
 end
 
-closeButton.MouseButton1Click:Connect(closeUI)
-closeButton.TouchTap:Connect(closeUI)
 -- ========================
--- 功能按鈕事件
+-- 按鈕事件
 -- ========================
--- 快速攻擊按鈕
+print("🔧 設置按鈕事件...")
+
+-- 側邊欄按鈕點擊
+sidebarButton.MouseButton1Click:Connect(function()
+    toggleUI()
+end)
+
+-- 快速攻擊按鈕（使用新版代碼）
 fastAttackBtn.MouseButton1Click:Connect(function()
+    print("🔘 快速攻擊按鈕被點擊")
+    
+    if not fastAttackModule then
+        showNotification("🔄 正在初始化快速攻擊系統...", Color3.fromRGB(255, 165, 0), 1)
+        fastAttackModule = initFastAttack()
+        if not fastAttackModule then
+            showNotification("❌ 快速攻擊初始化失敗", Color3.fromRGB(255, 0, 0), 1.5)
+            return
+        end
+    end
+    
     isFastAttackOn = not isFastAttackOn
     
     if isFastAttackOn then
+        -- 開啟快速攻擊
         fastAttackBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
-        fastAttackBtn.Text = "開啟"
+        fastAttackBtn.Text = "⚡ 快速攻擊 [ON]"
+        showNotification("⚡ 快速攻擊已開啟\n正在自動攻擊敵人...", Color3.fromRGB(0, 180, 0), 2)
         
-        -- 攻擊時添加特效雪花
-        for i = 1, 3 do
-            local snowType = snowTypes[math.random(1, #snowTypes)]
-            local snowflake = Instance.new("TextLabel")
-            snowflake.Size = UDim2.new(0, snowType.size, 0, snowType.size)
-            snowflake.Position = UDim2.new(0, math.random(0, 220), 0, -20)
-            snowflake.BackgroundTransparency = 1
-            snowflake.Text = snowType.symbol
-            snowflake.TextColor3 = Color3.fromRGB(100, 200, 255)
-            snowflake.Font = Enum.Font.SourceSansBold
-            snowflake.TextSize = snowType.size - 4
-            snowflake.ZIndex = 0
-            snowflake.Parent = mainFrame
-            
-            table.insert(snowflakes, {
-                object = snowflake,
-                speed = snowType.speed * (1.2 + math.random() * 0.3),
-                sway = snowType.sway * (0.8 + math.random() * 0.5),
-                spinSpeed = snowType.spin * (0.8 + math.random()),
-                swayOffset = math.random() * math.pi * 2,
-                floatPhase = math.random() * math.pi * 2,
-                transparency = 0.3 + math.random() * 0.3
-            })
-        end
-        
-        local success = startFastAttack()
-        if success then
-            showNotification("⚡ 快速攻擊已開啟", Color3.fromRGB(0, 180, 0), 2)
-        else
-            showNotification("❌ 快速攻擊初始化失敗", Color3.fromRGB(180, 0, 0), 2)
-            fastAttackBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-            fastAttackBtn.Text = "關閉"
-            isFastAttackOn = false
+        -- 啟動快速攻擊循環
+        if fastAttackModule and fastAttackModule.start then
+            fastAttackModule:start()
         end
     else
-        fastAttackBtn.BackgroundColor3 = Color3.fromRGB(80, 100, 140)
-        fastAttackBtn.Text = "關閉"
-        stopFastAttack()
-        showNotification("🛑 快速攻擊已關閉", Color3.fromRGB(180, 0, 0), 2)
+        -- 關閉快速攻擊
+        fastAttackBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
+        fastAttackBtn.Text = "⚡ 快速攻擊 [OFF]"
+        showNotification("🛑 快速攻擊已關閉", Color3.fromRGB(200, 0, 0), 1.5)
+        
+        -- 停止快速攻擊循環
+        if fastAttackModule and fastAttackModule.stop then
+            fastAttackModule:stop()
+        end
     end
 end)
 
 -- 皮腳本按鈕
 piScriptBtn.MouseButton1Click:Connect(function()
-    isPiScriptOn = not isPiScriptOn
+    piScriptBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+    piScriptBtn.Text = "🅿️ 加載中..."
     
-    if isPiScriptOn then
-        piScriptBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-        piScriptBtn.Text = "開啟"
-        
-        -- 直接執行 loadstring(game:HttpGet(...))()
-        local success = executePiScript()
-        
-        if success then
-            piScriptBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
-            piScriptBtn.Text = "已加載"
-        else
-            piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-            piScriptBtn.Text = "失敗"
-            isPiScriptOn = false
-            
-            task.wait(3)
-            piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
-            piScriptBtn.Text = "關閉"
-        end
-    else
+    local success = executePiScript()
+    
+    if success then
+        piScriptBtn.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
+        piScriptBtn.Text = "🅿️ 加載成功"
+        task.wait(1.5)
         piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
-        piScriptBtn.Text = "關閉"
-        showNotification("🅿️ 皮腳本已關閉", Color3.fromRGB(180, 0, 0), 2)
+        piScriptBtn.Text = "🅿️ 皮腳本"
+    else
+        piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+        piScriptBtn.Text = "🅿️ 加載失敗"
+        task.wait(1.5)
+        piScriptBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
+        piScriptBtn.Text = "🅿️ 皮腳本"
     end
 end)
 
--- ========================
--- 拖移功能
--- ========================
-local dragging = false
-local dragStart = nil
-local startPos = nil
-
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-    end
+-- 關閉按鈕
+closeButton.MouseButton1Click:Connect(function()
+    toggleUI()
 end)
 
-inputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-inputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
--- ========================
--- 緊急關閉功能（按ESC鍵）
--- ========================
-inputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.Escape then
-        closeUI()
-    end
-end)
-
--- ========================
--- 隨機添加雪花
--- ========================
-task.spawn(function()
-    while task.wait(math.random(2, 4)) do
-        if #snowflakes < 20 then
-            local snowType = snowTypes[math.random(1, #snowTypes)]
-            local snowflake = Instance.new("TextLabel")
-            snowflake.Size = UDim2.new(0, snowType.size, 0, snowType.size)
-            snowflake.Position = UDim2.new(0, math.random(-20, 240), 0, -20)
-            snowflake.BackgroundTransparency = 1
-            snowflake.Text = snowType.symbol
-            snowflake.TextColor3 = Color3.fromRGB(180, 220, 255)
-            snowflake.Font = Enum.Font.SourceSansBold
-            snowflake.TextSize = snowType.size - 4
-            snowflake.ZIndex = 0
-            snowflake.Parent = mainFrame
-            
-            table.insert(snowflakes, {
-                object = snowflake,
-                speed = snowType.speed * (0.8 + math.random() * 0.4),
-                sway = snowType.sway * (0.5 + math.random() * 1),
-                spinSpeed = snowType.spin * (0.5 + math.random()),
-                swayOffset = math.random() * math.pi * 2,
-                floatPhase = math.random() * math.pi * 2,
-                transparency = 0.4 + math.random() * 0.4
-            })
+-- ESC鍵關閉主UI（僅電腦）
+if not isMobile then
+    inputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.Escape then
+            if isUIVisible then
+                toggleUI()
+            end
         end
-    end
-end)
+    end)
+end
 
 -- ========================
 -- 初始化完成
 -- ========================
 task.wait(0.5)
-showNotification("✅ 玄丛腳本 v3.1 已加載", Color3.fromRGB(50, 150, 200), 3)
+
+-- 顯示啟動通知
+showNotification("✅ 玄丛腳本已加載 v6.0\n⚡ 快速攻擊代碼已更新\n🅿️ 皮腳本可用\n🖱️ 拖動系統已修復", Color3.fromRGB(50, 150, 200), 3)
 
 print("🎮 =================================")
-print("🎮 玄丛腳本 -秦始皇創作")
-print("🎮 功能：快速攻擊 + 皮腳本 + 雪花動畫")
-print("🎮 12片雪花正在飄落中...")
-print("🎮 皮腳本使用 loadstring(game:HttpGet(...))() 格式")
-print("🎮 UI將始終顯示，無法隱藏")
-print("🎮 按ESC鍵可關閉")
+print("🎮 玄丛腳本 - 快速攻擊優化版 v6.0")
+print("🎮 設備: " .. deviceType)
+print("🎮 快速攻擊: ✅ 使用新版代碼")
+print("🎮 拖動系統: ✅ 已修復")
+print("🎮 功能包括:")
+print("🎮   - 新版快速攻擊系統")
+print("🎮   - 自動搜索敵人 (Enemies/Characters)")
+print("🎮   - 快速攻擊循環")
+print("🎮   - 自動觸發攻擊事件")
 print("🎮 =================================")
+
+-- 預加載快速攻擊系統
+task.spawn(function()
+    task.wait(1)
+    print("🔧 預加載快速攻擊系統...")
+    fastAttackModule = initFastAttack()
+    if fastAttackModule then
+        print("✅ 快速攻擊系統預加載完成")
+        showNotification("⚡ 快速攻擊系統就緒\n點擊按鈕開啟功能", Color3.fromRGB(100, 150, 200), 2)
+    end
+end)
+
+print("🚀 腳本加載完成！快速攻擊代碼已更新。")
