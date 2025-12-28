@@ -1,0 +1,84 @@
+-- [[ GitHub: NEKO - 適配新版 UI 庫 ]]
+local success, NEKOLib = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOUI?t="..tick()))()
+end)
+
+if not success or not NEKOLib then
+    warn("❌ NEKO UI 載入失敗！")
+    return
+end
+
+local Lib = NEKOLib:Init()
+local player = game:GetService("Players").LocalPlayer
+
+-- [[ 原始全域變數 ]]
+_G.PVP = false
+_G.MOB = false
+_G.FastAttack = false
+_G.AutoV4 = false 
+
+-- [[ 核心邏輯 ]]
+game:GetService("RunService").Heartbeat:Connect(function()
+    pcall(function() player.CameraMaxZoomDistance = 1000 end)
+end)
+
+local function KillCombat()
+    _G.FastAttack = false
+    _G.CurrentFastAtkID = "KILL_" .. tick()
+end
+
+-- --- UI 按鈕與功能邏輯 --- --
+
+-- 1. 貓公告 (使用 AddInfo)
+local Tab0 = Lib:CreateTab("貓公告", true)
+Tab0:AddInfo("🐾 歡迎", "歡迎使用貓貓腳本 NEKO HUB")
+
+-- 2. 貓戰鬥 (使用 AddButton)
+local Tab1 = Lib:CreateTab("貓戰鬥", false)
+local btnPVP, btnMOB
+
+btnPVP = Tab1:AddButton("打架模式 : OFF", function(self)
+    _G.PVP = not _G.PVP
+    if _G.PVP then
+        _G.MOB = false
+        if btnMOB then btnMOB.Text = "  刷怪模式 : OFF" end
+        KillCombat()
+        task.wait(0.1)
+        _G.FastAttack = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOPVP"))()
+    else
+        KillCombat()
+    end
+    self.Text = "  打架模式 : " .. (_G.PVP and "ON" or "OFF")
+end)
+
+btnMOB = Tab1:AddButton("刷怪模式 : OFF", function(self)
+    _G.MOB = not _G.MOB
+    if _G.MOB then
+        _G.PVP = false
+        if btnPVP then btnPVP.Text = "  打架模式 : OFF" end
+        KillCombat()
+        task.wait(0.1)
+        _G.FastAttack = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOMOB"))()
+    else
+        KillCombat()
+    end
+    self.Text = "  刷怪模式 : " .. (_G.MOB and "ON" or "OFF")
+end)
+
+-- 3. 貓功能
+local Tab2 = Lib:CreateTab("貓功能", false)
+Tab2:AddButton("貓貓神速", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOSPD"))() end)
+Tab2:AddButton("貓貓透視", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOESP"))() end)
+Tab2:AddButton("自動 V4 : OFF", function(self)
+    _G.AutoV4 = not _G.AutoV4
+    if _G.AutoV4 then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOV4"))()
+    end
+    self.Text = "  自動 V4 : " .. (_G.AutoV4 and "ON" or "OFF")
+end)
+
+-- 4. 貓召喚
+local Tab3 = Lib:CreateTab("貓召喚", false)
+Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOFly"))() end)
