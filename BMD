@@ -11,7 +11,6 @@ local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
 -- 【白名單資料庫】 玩家名字 = "HWID"
 local Whitelist = {
     ["mknhghv"] = "bc20243e-9910-474c-84d1-35376a4ed208",
-    ["mknhghv"] = "9DD71E58-A668-43DB-A8D5-D5FB5A1C80A1",
 }
 
 -- 認證函數
