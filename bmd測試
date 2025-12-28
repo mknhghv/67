@@ -13,7 +13,7 @@ for _, username in ipairs(whitelist) do
 end
 
 if not isWhitelisted then
-    player:Kick("You are not whitelisted to use this script.")
+    player:Kick("你沒有白名單")
 else
     loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6%E8%85%B3%E6%9C%AC%E6%B8%AC%E8%A9%A6"))()
 end
