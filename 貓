@@ -45,7 +45,7 @@ btnPVP = Tab1:AddButton("打架模式 : OFF", function(self)
         KillCombat()
         task.wait(0.1)
         _G.FastAttack = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catpvp"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOPVP.txt"))()
     else
         KillCombat()
     end
@@ -60,7 +60,7 @@ btnMOB = Tab1:AddButton("刷怪模式 : OFF", function(self)
         KillCombat()
         task.wait(0.1)
         _G.FastAttack = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catmob"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOMOB.txt"))()
     else
         KillCombat()
     end
@@ -69,16 +69,16 @@ end)
 
 -- 3. 貓功能
 local Tab2 = Lib:CreateTab("YK功能", false)
-Tab2:AddButton("YK神速", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catspeed"))() end)
-Tab2:AddButton("YK透視", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catesp"))() end)
+Tab2:AddButton("YK神速", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOSPD.txt"))() end)
+Tab2:AddButton("YK透視", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOESP.txt"))() end)
 Tab2:AddButton("自動 V4 : OFF", function(self)
     _G.AutoV4 = not _G.AutoV4
     if _G.AutoV4 then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/nekov4"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOV4.txt"))()
     end
     self.Text = "  自動 V4 : " .. (_G.AutoV4 and "ON" or "OFF")
 end)
 
 -- 4. 貓召喚
 local Tab3 = Lib:CreateTab("YK召喚", false)
-Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catfly"))() end)
+Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOFly.txt"))() end)
