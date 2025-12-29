@@ -130,10 +130,6 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
     print("零域 | 已攔截掛機檢測，持續運行中...")
 end)
 
-about:Button("fps优化（关闭不了一点傻逼）",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fps优化"))()
-end)
-
 about:Button("hoho",function()
 	loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI'))()
 end)
