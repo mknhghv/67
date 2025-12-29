@@ -9,7 +9,7 @@ old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(fu
             local options = args[2]
             if type(options) == "table" and 
                tostring(options.Title) == "零脚本" and 
-               tostring(options.Text) == "小轩制作" 
+               tostring(options.Text) == "YK制作" 
             then
                 local modifiedOptions = table.clone(options)
                 modifiedOptions.Text = "1"
@@ -32,7 +32,7 @@ main.Start = returnnil
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
 	Title = "零脚本",
-	Text = "小轩制作",
+	Text = "YK制作",
 	Duration = 5;
 })
 wait(0.1)
@@ -52,7 +52,7 @@ local UITab5 = win:Tab("传送",'7734068321')
 
 local about = UITab1:section("公告",true)
 
-about:Label("小轩制作")
+about:Label("YK制作")
 about:Label("脚本测试中")
 local about = UITab2:section("脚本",true)
 about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
@@ -118,16 +118,8 @@ about:Button("飞行",function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fly"))()
 end)
 
-about:Button("法天象地",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/法天像地"))()
-end)
-
-about:Button("redz",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/redz"))()
-end)
-
 about:Button("皮脚本",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/皮"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E7%9A%AE.txt"))()
 end)
 
 local VirtualUser = game:GetService("VirtualUser")
@@ -864,6 +856,6 @@ end)
 
 game:GetService("StarterGui"):SetCore("SendNotification",{
 	Title = "零脚本",
-	Text = "加载完成 祝您使用愉快",
+	Text = "加载完成",
 	Duration = 5;
 })
