@@ -30,11 +30,11 @@ end
 -- --- UI 按鈕與功能邏輯 --- --
 
 -- 1. 貓公告 (使用 AddInfo)
-local Tab0 = Lib:CreateTab("YK公告", true)
-Tab0:AddInfo("🐾 歡迎", "歡迎使用YK腳本 NEKO HUB")
+local Tab0 = Lib:CreateTab("貓公告", true)
+Tab0:AddInfo("🐾 歡迎", "歡迎使用貓貓腳本 NEKO HUB")
 
 -- 2. 貓戰鬥 (使用 AddButton)
-local Tab1 = Lib:CreateTab("YK戰鬥", false)
+local Tab1 = Lib:CreateTab("貓戰鬥", false)
 local btnPVP, btnMOB
 
 btnPVP = Tab1:AddButton("打架模式 : OFF", function(self)
@@ -80,5 +80,5 @@ Tab2:AddButton("自動 V4 : OFF", function(self)
 end)
 
 -- 4. 貓召喚
-local Tab3 = Lib:CreateTab("YK召喚", false)
+local Tab3 = Lib:CreateTab("貓召喚", false)
 Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/NEKOFly.txt"))() end)
