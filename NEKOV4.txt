@@ -1,0 +1,13 @@
+if _G.V4Started then return end; _G.V4Started = true
+task.spawn(function()
+    while true do
+        if _G.AutoV4 then
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                local awake = char:FindFirstChild("Awakening") or game.Players.LocalPlayer.Backpack:FindFirstChild("Awakening")
+                if awake then awake.RemoteFunction:InvokeServer(true) end
+            end)
+        end
+        task.wait(1)
+    end
+end)

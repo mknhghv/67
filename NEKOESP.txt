@@ -1,0 +1,20 @@
+if _G.ESPStarted then return end; _G.ESPStarted = true
+local Folder = game:GetService("CoreGui"):FindFirstChild("NekoESP") or Instance.new("Folder", game:GetService("CoreGui")); Folder.Name = "NekoESP"
+task.spawn(function()
+    while true do
+        for _, p in ipairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer then
+                local char = p.Character; local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if _G.ESP and hrp and char:FindFirstChildOfClass("Humanoid").Health > 0 then
+                    local bb = Folder:FindFirstChild(p.Name) or Instance.new("BillboardGui", Folder)
+                    bb.Name = p.Name; bb.Adornee = hrp; bb.AlwaysOnTop = true; bb.Size = UDim2.new(0,100,0,30); bb.Enabled = true
+                    local l = bb:FindFirstChild("L") or Instance.new("TextLabel", bb); l.Name = "L"; l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.TextColor3 = Color3.new(1,1,1); l.TextSize = 12
+                    l.Text = p.Name .. " [" .. math.floor((hrp.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude) .. "m]"
+                else
+                    if Folder:FindFirstChild(p.Name) then Folder[p.Name].Enabled = false end
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
