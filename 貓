@@ -1,6 +1,6 @@
 -- [[ GitHub: NEKO - 適配新版 UI 庫 ]]
 local success, NEKOLib = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOUI?t="..tick()))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/ui))()
 end)
 
 if not success or not NEKOLib then
