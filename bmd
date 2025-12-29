@@ -2,6 +2,7 @@ local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 local WhitelistedPlayers = {
     ["mknhghv"] = true,
+    ["mknhghv11"] = true,
  }
 
 local function IsWhitelisted(player)
