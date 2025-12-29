@@ -30,11 +30,11 @@ end
 -- --- UI 按鈕與功能邏輯 --- --
 
 -- 1. 貓公告 (使用 AddInfo)
-local Tab0 = Lib:CreateTab("貓公告", true)
-Tab0:AddInfo("🐾 歡迎", "歡迎使用貓貓腳本 NEKO HUB")
+local Tab0 = Lib:CreateTab("YK公告", true)
+Tab0:AddInfo("🐾 歡迎", "歡迎使用YK腳本 NEKO HUB")
 
 -- 2. 貓戰鬥 (使用 AddButton)
-local Tab1 = Lib:CreateTab("貓戰鬥", false)
+local Tab1 = Lib:CreateTab("YK戰鬥", false)
 local btnPVP, btnMOB
 
 btnPVP = Tab1:AddButton("打架模式 : OFF", function(self)
@@ -45,7 +45,7 @@ btnPVP = Tab1:AddButton("打架模式 : OFF", function(self)
         KillCombat()
         task.wait(0.1)
         _G.FastAttack = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOPVP"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catpvp"))()
     else
         KillCombat()
     end
@@ -60,7 +60,7 @@ btnMOB = Tab1:AddButton("刷怪模式 : OFF", function(self)
         KillCombat()
         task.wait(0.1)
         _G.FastAttack = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOMOB"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catmob"))()
     else
         KillCombat()
     end
@@ -68,17 +68,17 @@ btnMOB = Tab1:AddButton("刷怪模式 : OFF", function(self)
 end)
 
 -- 3. 貓功能
-local Tab2 = Lib:CreateTab("貓功能", false)
-Tab2:AddButton("貓貓神速", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOSPD"))() end)
-Tab2:AddButton("貓貓透視", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOESP"))() end)
+local Tab2 = Lib:CreateTab("YK功能", false)
+Tab2:AddButton("YK神速", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catspeed"))() end)
+Tab2:AddButton("YK透視", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catesp"))() end)
 Tab2:AddButton("自動 V4 : OFF", function(self)
     _G.AutoV4 = not _G.AutoV4
     if _G.AutoV4 then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOV4"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/nekov4"))()
     end
     self.Text = "  自動 V4 : " .. (_G.AutoV4 and "ON" or "OFF")
 end)
 
 -- 4. 貓召喚
-local Tab3 = Lib:CreateTab("貓召喚", false)
-Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/wtf6701385-stack/-/refs/heads/main/NEKOFly"))() end)
+local Tab3 = Lib:CreateTab("YK召喚", false)
+Tab3:AddButton("召喚飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/catfly"))() end)
