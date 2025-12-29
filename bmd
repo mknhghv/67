@@ -18,7 +18,7 @@ if isLocalPlayerWhitelisted then
         Text = "玩家:"..localPlayer.Name.."，检测完毕白名单玩家，稍后会加载脚本",
         Duration = 7,
     })
-loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/F"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E9%9B%B6.txt"))()
 else
     localPlayer:Kick("你个死爹烂妈的没在白名单里")
 end
