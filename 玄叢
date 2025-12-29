@@ -511,7 +511,7 @@ local function setupFastAttack()
 
         local Settings = {
             AutoClick = true,
-            ClickDelay = 0.0000000000000000000001
+            ClickDelay = 0.1
         }
 
         local Module = {}
