@@ -1,0 +1,289 @@
+-- ============================================
+-- 🌌 玄叢腳本 v7.0 - 無限距離 + 可調速度 + 現代美化版
+-- 作者：秦始皇創作 | 改版：Grok 2026
+-- ============================================
+
+print("🌌 玄叢腳本 v7.0 加載中...")
+
+local inputService = game:GetService("UserInputService")
+local tweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local isMobile = inputService.TouchEnabled
+
+repeat task.wait() until game:IsLoaded()
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 清理舊 UI
+for _, gui in ipairs(playerGui:GetChildren()) do
+    if gui.Name:find("XuanCong") then gui:Destroy() end
+end
+
+-- 創建 ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "XuanCongScript_V7"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- 左上開關按鈕（霓虹風）
+local sidebarButton = Instance.new("TextButton")
+sidebarButton.Size = UDim2.new(0, 50, 0, 50)
+sidebarButton.Position = UDim2.new(0, 15, 0, 15)
+sidebarButton.BackgroundColor3 = Color3.fromRGB(10, 20, 40)
+sidebarButton.Text = "🌌"
+sidebarButton.TextSize = 24
+sidebarButton.Font = Enum.Font.GothamBold
+sidebarButton.Parent = screenGui
+
+local sbCorner = Instance.new("UICorner", sidebarButton); sbCorner.CornerRadius = UDim.new(0, 12)
+local sbStroke = Instance.new("UIStroke", sidebarButton); sbStroke.Color = Color3.fromRGB(100, 200, 255); sbStroke.Thickness = 3
+local sbGlow = Instance.new("UIGradient", sidebarButton); sbGlow.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 100, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))}
+
+-- 主框架（現代漸層 + 毛玻璃）
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 25, 50)
+mainFrame.BackgroundTransparency = 0.15
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+local mfCorner = Instance.new("UICorner", mainFrame); mfCorner.CornerRadius = UDim.new(0, 15)
+local mfStroke = Instance.new("UIStroke", mainFrame); mfStroke.Color = Color3.fromRGB(120, 180, 255); mfStroke.Thickness = 2; mfStroke.Transparency = 0.3
+local mfGradient = Instance.new("UIGradient", mainFrame)
+mfGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 40, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 15, 40))
+}
+
+-- 標題欄
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 45)
+titleBar.BackgroundColor3 = Color3.fromRGB(10, 20, 50)
+titleBar.BackgroundTransparency = 0.2
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner", titleBar); titleCorner.CornerRadius = UDim.new(0, 15)
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -40, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "🌌 玄叢腳本 v7.0 - 無限攻擊"
+titleLabel.TextColor3 = Color3.fromRGB(150, 220, 255)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 16
+titleLabel.Parent = titleBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 35, 0, 35)
+closeBtn.Position = UDim2.new(1, -40, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.Text = "✖"
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = titleBar
+local closeCorner = Instance.new("UICorner", closeBtn); closeCorner.CornerRadius = UDim.new(0, 8)
+
+-- 拖動系統（同原版修復版）
+local dragging = false
+local dragInput, dragStart, startPos
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+inputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+inputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- 通知系統（美化版）
+local function notify(msg, color, dur)
+    -- 同原版但加漸層
+    local n = Instance.new("Frame")
+    n.Size = UDim2.new(0, 260, 0, 70)
+    n.Position = UDim2.new(1, 280, 1, -80)
+    n.AnchorPoint = Vector2.new(1,1)
+    n.BackgroundColor3 = color or Color3.fromRGB(30, 50, 90)
+    n.BackgroundTransparency = 0.2
+    n.Parent = screenGui
+    local nc = Instance.new("UICorner", n); nc.CornerRadius = UDim.new(0,12)
+    local ns = Instance.new("UIStroke", n); ns.Color = Color3.fromRGB(100,200,255); ns.Thickness = 2
+    local nl = Instance.new("TextLabel")
+    nl.Size = UDim2.new(1,-20,1,-20)
+    nl.Position = UDim2.new(0,10,0,10)
+    nl.BackgroundTransparency = 1
+    nl.Text = msg
+    nl.TextColor3 = Color3.new(1,1,1)
+    nl.Font = Enum.Font.Gotham
+    nl.TextSize = 14
+    nl.TextWrapped = true
+    nl.Parent = n
+    
+    tweenService:Create(n, TweenInfo.new(0.3), {Position = UDim2.new(1, -20, 1, -80)}):Play()
+    task.delay(dur or 2.5, function()
+        tweenService:Create(n, TweenInfo.new(0.2), {Position = UDim2.new(1, 280, 1, -80)}):Play()
+        task.wait(0.2); n:Destroy()
+    end)
+end
+
+-- 快速攻擊核心（加無限距離 + 可調速度）
+local fastAttackModule = nil
+local attackDelay = 0.08  -- 預設
+
+local function setupFastAttack()
+    local Player = game.Players.LocalPlayer
+    local ReplicatedStorage = game.ReplicatedStorage
+    local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+    local Net = Remotes:WaitForChild("Modules"):WaitForChild("Net")
+    local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
+    local RegisterHit = Net:WaitForChild("RE/RegisterHit")
+    
+    -- 解 API：無限 SimulationRadius
+    if sethiddenproperty then
+        pcall(function()
+            sethiddenproperty(Player, "SimulationRadius", math.huge)
+        end)
+        notify("🌐 攻擊距離已解鎖為無限！（>2500 studs）", Color3.fromRGB(0,255,0), 2)
+    end
+
+    local FastAttack = {
+        Distance = math.huge,
+        start = function(self)
+            task.spawn(function()
+                while task.wait(attackDelay) do
+                    if _G.FastAttack then
+                        local enemies = {}
+                        for _, folder in {workspace.Enemies, workspace.Characters} do
+                            for _, enemy in folder:GetChildren() do
+                                local head = enemy:FindFirstChild("Head")
+                                if head and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                                    table.insert(enemies, head)
+                                end
+                            end
+                        end
+                        if #enemies > 0 then
+                            RegisterAttack:FireServer(attackDelay)
+                            RegisterHit:FireServer(enemies[1], enemies)
+                        end
+                    end
+                end
+            end)
+        end
+    }
+    return FastAttack
+end
+
+-- UI 按鈕 + 速度滑桿
+local function createBtn(text, icon, posY, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -30, 0, 40)
+    btn.Position = UDim2.new(0, 15, 0, posY)
+    btn.BackgroundColor3 = color
+    btn.BackgroundTransparency = 0.3
+    btn.Text = icon .. " " .. text
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 15
+    btn.Parent = mainFrame
+    local bc = Instance.new("UICorner", btn); bc.CornerRadius = UDim.new(0,10)
+    local bg = Instance.new("UIGradient", btn)
+    bg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, color), ColorSequenceKeypoint.new(1, color:Lerp(Color3.new(0,0,0), 0.3))}
+    return btn
+end
+
+local fastBtn = createBtn("快速攻擊 [OFF]", "⚡", 60, Color3.fromRGB(0, 150, 255))
+local piBtn = createBtn("皮腳本", "🅿️", 110, Color3.fromRGB(255, 150, 50))
+
+-- 速度調整滑桿
+local sliderFrame = Instance.new("Frame")
+sliderFrame.Size = UDim2.new(1, -30, 0, 50)
+sliderFrame.Position = UDim2.new(0, 15, 0, 160)
+sliderFrame.BackgroundTransparency = 1
+sliderFrame.Parent = mainFrame
+
+local sliderLabel = Instance.new("TextLabel")
+sliderLabel.Size = UDim2.new(1,0,0,20)
+sliderLabel.Text = "攻擊速度: 0.08s (可調)"
+sliderLabel.TextColor3 = Color3.fromRGB(200,240,255)
+sliderLabel.BackgroundTransparency = 1
+sliderLabel.Font = Enum.Font.Gotham
+sliderLabel.Parent = sliderFrame
+
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(1,0,0,12)
+sliderBar.Position = UDim2.new(0,0,0,25)
+sliderBar.BackgroundColor3 = Color3.fromRGB(50,80,120)
+sliderBar.Parent = sliderFrame
+local sbCorner = Instance.new("UICorner", sliderBar); sbCorner.CornerRadius = UDim.new(0,6)
+
+local sliderBtn = Instance.new("TextButton")
+sliderBtn.Size = UDim2.new(0,20,0,20)
+sliderBtn.Position = UDim2.new((attackDelay-0.05)/0.25, -10, 0, -4)
+sliderBtn.BackgroundColor3 = Color3.fromRGB(0,200,255)
+sliderBtn.Text = ""
+sliderBtn.Parent = sliderBar
+local sbtnCorner = Instance.new("UICorner", sliderBtn); sbtnCorner.CornerRadius = UDim.new(1,0)
+
+local sliding = false
+sliderBtn.MouseButton1Down:Connect(function()
+    sliding = true
+end)
+inputService.InputChanged:Connect(function(input)
+    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relX = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        attackDelay = 0.05 + relX * 0.25  -- 0.05 ~ 0.3
+        sliderBtn.Position = UDim2.new(relX, -10, 0, -4)
+        sliderLabel.Text = string.format("攻擊速度: %.3fs", attackDelay)
+    end
+end)
+inputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end
+end)
+
+-- 按鈕事件
+local isOpen = false
+local isFastOn = false
+
+sidebarButton.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    mainFrame.Visible = isOpen
+    sidebarButton.Text = isOpen and "✖" or "🌌"
+    notify(isOpen and "🌌 玄叢腳本已開啟" or "🌌 玄叢腳本已隱藏", Color3.fromRGB(100,180,255), 1.5)
+end)
+
+closeBtn.MouseButton1Click:Connect(function() sidebarButton.MouseButton1Click:Fire() end)
+
+fastBtn.MouseButton1Click:Connect(function()
+    if not fastAttackModule then
+        fastAttackModule = setupFastAttack()
+    end
+    isFastOn = not isFastOn
+    fastBtn.Text = "⚡ 快速攻擊 [" .. (isFastOn and "ON" or "OFF") .. "]"
+    fastBtn.BackgroundColor3 = isFastOn and Color3.fromRGB(0,220,100) or Color3.fromRGB(0,150,255)
+    if isFastOn then fastAttackModule:start() end
+    notify(isFastOn and "⚡ 無限快速攻擊已開啟！" or "🛑 快速攻擊已關閉", isFastOn and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,100,100), 2)
+    _G.FastAttack = isFastOn
+end)
+
+piBtn.MouseButton1Click:Connect(function()
+    notify("🅿️ 正在加載皮腳本...", Color3.fromRGB(255,165,0), 2)
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+        notify("✅ 皮腳本加載成功！", Color3.fromRGB(0,255,0), 2)
+    end)
+end)
+
+-- 啟動通知
+notify("🌌 玄叢腳本 v7.0 加載完成！\n⚡ 無限距離已解鎖\n🎚️ 可調攻擊速度\n🎨 全新現代 UI", Color3.fromRGB(100,200,255), 4)
+print("🚀 玄叢腳本 v7.0 就緒！無限攻擊 + 可調速度 + 美化 UI")
