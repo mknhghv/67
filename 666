@@ -1,0 +1,210 @@
+-- 零中心 Hub - Delta 手機專用完整版
+-- 原作者：小轩制作 | 手機 Delta 穩定優化 + 自動顯示UI
+
+-- 關閉相機抖動
+local CameraShaker = require(game:GetService("ReplicatedStorage").Util.CameraShaker)
+CameraShaker:Stop()
+
+game:GetService("StarterGui"):SetCore("SendNotification",{
+    Title = "零中心 Hub",
+    Text = "Delta 手機版載入中...",
+    Duration = 5
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- 載入 Orion Library
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- 視窗設定（手機友好）
+local Window = OrionLib:MakeWindow({
+    Name = "零中心 Hub - Delta手機版",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "LingCenterDelta",
+    IntroEnabled = true,
+    IntroText = "歡迎使用手機版",
+    IntroIcon = "rbxassetid://7734068321",
+    Icon = "rbxassetid://7734068321"
+})
+
+OrionLib:MakeNotification({
+    Name = "載入成功！",
+    Content = "零中心 Hub 已啟動！右上角有開關按鈕哦~",
+    Image = "rbxassetid://7734068321",
+    Time = 8
+})
+
+-- 右上角開關按鈕（手機超好按）
+Window:AddToggleButton({
+    Name = "UI 開關",
+    Default = true,
+    Callback = function(value)
+        OrionLib:Toggle(value)
+    end
+})
+
+-- Tabs
+local Tab1 = Window:MakeTab({Name = "公告", Icon = "rbxassetid://6031097226"})
+local Tab2 = Window:MakeTab({Name = "主要", Icon = "rbxassetid://6034509994"})
+local Tab3 = Window:MakeTab({Name = "秒殺", Icon = "rbxassetid://6034839668"})
+local Tab4 = Window:MakeTab({Name = "透視", Icon = "rbxassetid://6031229999"})
+local Tab5 = Window:MakeTab({Name = "傳送", Icon = "rbxassetid://6031090991"})
+
+-- 公告
+Tab1:AddLabel("作者：小轩制作")
+Tab1:AddLabel("Delta 手機專用完整版")
+Tab1:AddLabel("右上角按鈕可隱藏/顯示 UI")
+
+-- 主要功能
+Tab2:AddSection("視野調整")
+Tab2:AddSlider("視角距離", 128, 10000, 128, 1, function(v)
+    LocalPlayer.CameraMaxZoomDistance = v
+end)
+
+Tab2:AddSection("自動V4")
+local autoV4Enabled = false
+local function autoV4Loop()
+    while autoV4Enabled do
+        pcall(function()
+            local tool = LocalPlayer.Backpack:FindFirstChild("Awakening")
+            if tool then
+                tool.RemoteFunction:InvokeServer(true)
+            end
+        end)
+        wait(1)
+    end
+end
+Tab2:AddToggle("自動V4", false, function(v)
+    autoV4Enabled = v
+    if v then spawn(autoV4Loop) end
+end)
+
+Tab2:AddSection("外部腳本")
+Tab2:AddButton("飛行", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fly.lua"))() end)
+Tab2:AddButton("法天象地", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))() end)
+Tab2:AddButton("FPS優化", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))() end)
+Tab2:AddButton("Hoho Hub", function() loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI'))() end)
+
+-- 秒殺系統（完整核心）
+local FastAttack = {
+    Enabled = true,
+    Range = 10000,
+    Delay = 0.1,
+    AttackMobs = true,
+    AttackPlayers = true
+}
+
+spawn(function()
+    while wait(FastAttack.Delay) do
+        if not FastAttack.Enabled then continue end
+        pcall(function()
+            local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool and tool.ToolTip ~= "Gun" then
+                for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                    if FastAttack.AttackMobs and enemy:FindFirstChild("HumanoidRootPart") and (enemy.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= FastAttack.Range then
+                        game.ReplicatedStorage.Remotes["RE/RegisterHit"]:FireServer(enemy.HumanoidRootPart, {{enemy, enemy.HumanoidRootPart}})
+                        game.ReplicatedStorage.Remotes["RE/RegisterAttack"]:FireServer(FastAttack.Delay)
+                    end
+                end
+                for _, plr in pairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and FastAttack.AttackPlayers and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        if dist <= FastAttack.Range then
+                            game.ReplicatedStorage.Remotes["RE/RegisterHit"]:FireServer(plr.Character.HumanoidRootPart, {{plr.Character, plr.Character.HumanoidRootPart}})
+                            game.ReplicatedStorage.Remotes["RE/RegisterAttack"]:FireServer(FastAttack.Delay)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+Tab3:AddSection("秒殺設定")
+Tab3:AddToggle("秒殺開關", true, function(v) FastAttack.Enabled = v end)
+Tab3:AddTextbox("範圍", "10000", function(v) FastAttack.Range = tonumber(v) or 10000 end)
+Tab3:AddTextbox("延遲", "0.1", function(v) FastAttack.Delay = tonumber(v) or 0.1 end)
+Tab3:AddToggle("打怪", true, function(v) FastAttack.AttackMobs = v end)
+Tab3:AddToggle("打人", true, function(v) FastAttack.AttackPlayers = v end)
+
+Tab3:AddSection("加速")
+local SpeedEnabled = false
+local SpeedValue = 50
+Tab3:AddTextbox("速度值", "50", function(v) SpeedValue = tonumber(v) or 50 end)
+Tab3:AddToggle("加速開關", false, function(v)
+    SpeedEnabled = v
+    if v then
+        spawn(function()
+            while SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") do
+                local dir = LocalPlayer.Character.Humanoid.MoveDirection
+                if dir.Magnitude > 0 then
+                    LocalPlayer.Character:TranslateBy(dir * SpeedValue / 30)
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end
+end)
+
+-- 透視（簡化版，手機流暢）
+local ESPEnabled = false
+Tab4:AddToggle("透視開關", false, function(v)
+    ESPEnabled = v
+    if v then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                local highlight = Instance.new("Highlight")
+                highlight.FillColor = Color3.fromRGB(255,0,0)
+                highlight.OutlineColor = Color3.fromRGB(255,255,0)
+                highlight.Adornee = plr.Character
+                highlight.Parent = plr.Character
+            end
+        end
+    else
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr.Character then
+                local hl = plr.Character:FindFirstChildOfClass("Highlight")
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(function(plr)
+    if ESPEnabled then
+        plr.CharacterAdded:Wait()
+        if plr.Character and plr.Character:FindFirstChild("Head") then
+            local highlight = Instance.new("Highlight")
+            highlight.FillColor = Color3.fromRGB(255,0,0)
+            highlight.Parent = plr.Character
+        end
+    end
+end)
+
+-- 傳送
+Tab5:AddSection("海域")
+Tab5:AddButton("一海", function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelMain") end)
+Tab5:AddButton("二海", function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelDressrosa") end)
+Tab5:AddButton("三海", function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelZou") end)
+
+Tab5:AddSection("二海地點")
+Tab5:AddButton("天鵝房間", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-287.37, 305.81, 592.98) end)
+Tab5:AddButton("豪宅", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(2286.93, 15.06, 910.51) end)
+Tab5:AddButton("鬼船內", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-6501.06, 83.11, -123.52) end)
+Tab5:AddButton("鬼船外", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(922.78, 123.96, 32842.40) end)
+
+Tab5:AddSection("三海地點")
+Tab5:AddButton("海洋城堡", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12463.60, 376.26, -7566.08) end)
+Tab5:AddButton("海龜豪宅", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5060.41, 316.43, -3192.30) end)
+Tab5:AddButton("司法島", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5096.48, 316.43, -3177.91) end)
+Tab5:AddButton("九頭蛇島", function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5027.03, 316.43, -3206.07) end)
+
+-- 自動顯示 UI
+OrionLib:Init()
