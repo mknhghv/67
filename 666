@@ -30,7 +30,7 @@ main.Start = returnnil
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local pastebinUrl = "https://pastebin.com/raw/您的PastebinID"  -- <<< 改成您的 Pastebin Raw 連結 !!!
+local pastebinUrl = "https://pastebin.com/raw/https://pastebin.com/raw/dhUqPgnf"  -- <<< 改成您的 Pastebin Raw 連結 !!!
 
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
 
