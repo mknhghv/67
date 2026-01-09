@@ -1,0 +1,557 @@
+-- 零中心 Hub - 美化完整版（2026年穩定）
+-- 原作者：小轩制作 | UI 美化 + 完整功能整合
+
+local old
+old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    if method == "SetCore" and args[1] == "SendNotification" then
+        local options = args[2]
+        if type(options) == "table" and tostring(options.Title) == "零脚本" and tostring(options.Text) == "小轩制作" then
+            local modifiedOptions = table.clone(options)
+            modifiedOptions.Text = "美化版載入中..."
+            return old(self, modifiedOptions)
+        end
+    end
+    return old(self, ...)
+end))
+
+-- 關閉相機抖動
+local main = require(game:GetService("ReplicatedStorage").Util.CameraShaker.Main)
+local returnnil = function() return nil end
+main.StartShake = returnnil
+main.ShakeOnce = returnnil
+main.ShakeSustain = returnnil
+main.CameraShakeInstance = returnnil
+main.Shake = returnnil
+main.Start = returnnil
+
+game:GetService("StarterGui"):SetCore("SendNotification",{Title = "零脚本", Text = "小轩制作 - 美化版", Duration = 5})
+wait(0.1)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- 載入 Orion Library（超穩定）
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- 美化視窗
+local Window = OrionLib:MakeWindow({
+    Name = "零中心 Hub",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "LingCenter",
+    IntroEnabled = true,
+    IntroText = "零中心 Hub 載入中...",
+    IntroIcon = "rbxassetid://7734068321",
+    Icon = "rbxassetid://7734068321"
+})
+
+OrionLib:MakeNotification({
+    Name = "歡迎使用零中心",
+    Content = "美化完整版載入成功！祝您遊戲愉快 🚀",
+    Image = "rbxassetid://7734068321",
+    Time = 8
+})
+
+-- Tabs（美化圖標）
+local Tab1 = Window:MakeTab({Name = "公告", Icon = "rbxassetid://6031097226"})
+local Tab2 = Window:MakeTab({Name = "主要功能", Icon = "rbxassetid://6034509994"})
+local Tab3 = Window:MakeTab({Name = "秒殺", Icon = "rbxassetid://6034839668"})
+local Tab4 = Window:MakeTab({Name = "透視", Icon = "rbxassetid://6031229999"})
+local Tab5 = Window:MakeTab({Name = "傳送", Icon = "rbxassetid://6031090991"})
+
+-- 公告
+Tab1:AddSection({Name = "腳本資訊"})
+Tab1:AddLabel("作者：小轩制作")
+Tab1:AddLabel("UI 美化完整版 - 2026年穩定運行")
+Tab1:AddLabel("感謝使用零中心 Hub！")
+
+-- ==================== 主要功能 ====================
+Tab2:AddSection({Name = "視野調整"})
+Tab2:AddSlider({
+    Name = "視角縮放距離",
+    Min = 128,
+    Max = 10000,
+    Default = 128,
+    Increment = 1,
+    Callback = function(Value)
+        Players.LocalPlayer.CameraMaxZoomDistance = Value
+    end
+})
+
+-- 自動V4
+local autoV4Task = nil
+local toggleKey = "自动v4"
+
+local function getToggleState(key)
+    if not _G.ToggleStates then _G.ToggleStates = {} end
+    return _G.ToggleStates[key] or false
+end
+
+local function callAwakeningRemote()
+    local Backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not Backpack then return end
+    local Awakening = Backpack:FindFirstChild("Awakening")
+    if not Awakening then return end
+    local RemoteFunc = Awakening:FindFirstChild("RemoteFunction")
+    if RemoteFunc and RemoteFunc:IsA("RemoteFunction") then
+        pcall(function() RemoteFunc:InvokeServer(true) end)
+    end
+end
+
+local function toggleAutoV4(enable)
+    if autoV4Task then task.cancel(autoV4Task) autoV4Task = nil end
+    if enable then
+        autoV4Task = task.spawn(function()
+            while getToggleState(toggleKey) do
+                callAwakeningRemote()
+                task.wait(1)
+            end
+        end)
+    end
+end
+
+Tab2:AddSection({Name = "自動覺醒"})
+Tab2:AddToggle({
+    Name = "自動V4",
+    Default = false,
+    Callback = function(Value)
+        _G.ToggleStates = _G.ToggleStates or {}
+        _G.ToggleStates[toggleKey] = Value
+        toggleAutoV4(Value)
+    end
+})
+
+Tab2:AddSection({Name = "外部腳本"})
+Tab2:AddButton({Name = "飛行腳本", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fly.lua"))() end})
+Tab2:AddButton({Name = "法天象地", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))() end})
+Tab2:AddButton({Name = "FPS 優化", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))() end})
+Tab2:AddButton({Name = "Hoho Hub", Callback = function() loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI'))() end})
+
+-- ==================== 秒殺功能完整代码 ====================
+local Settings = {AutoClick = true, ClickDelay = 0.3}
+Settings.Distance = 5000
+local _G = _G or getfenv(0)._G
+_G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
+
+local function SafeWaitForChild(parent, childName)
+    local success, result = pcall(function() return parent:WaitForChild(childName, 10) end)
+    if not success or not result then warn("未找到组件: " .. childName) end
+    return result
+end
+
+local function CheckAndGetCoreComponents()
+    local Remotes, Modules, Net, RegisterAttack, RegisterHit, Enemies = nil, nil, nil, nil, nil, nil
+    while true do
+        Remotes = SafeWaitForChild(ReplicatedStorage, "Remotes")
+        Modules = SafeWaitForChild(ReplicatedStorage, "Modules")
+        Net = Modules and SafeWaitForChild(Modules, "Net") or nil
+        RegisterAttack = Net and SafeWaitForChild(Net, "RE/RegisterAttack") or nil
+        RegisterHit = Net and SafeWaitForChild(Net, "RE/RegisterHit") or nil
+        Enemies = SafeWaitForChild(workspace, "Enemies")
+        if Remotes and Modules and Net and RegisterAttack and RegisterHit and Enemies then
+            return Remotes, Net, RegisterAttack, RegisterHit, Enemies
+        end
+        task.wait(1)
+    end
+end
+
+local function IsAlive(character)
+    if not character then return false end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    return humanoid and humanoid.Health and humanoid.Health > 0
+end
+
+local function GetRandomValidPart(target)
+    local allParts = target:GetDescendants()
+    local validParts = {}
+    local humanoidRootPart = target:FindFirstChild("HumanoidRootPart")
+    local boneParts = humanoidRootPart and humanoidRootPart.Parent:GetDescendants() or {}
+    for _, part in ipairs(allParts) do
+        if part:IsA("BasePart") and part.CanCollide and table.find(boneParts, part) then
+            table.insert(validParts, part)
+        end
+    end
+    return #validParts > 0 and validParts[math.random(1, #validParts)] or target:FindFirstChild("HumanoidRootPart")
+end
+
+local Module = {}
+local _ENV = (getgenv or getrenv or getfenv)()
+
+Module.FastAttack = (function()
+    if _ENV.rz_FastAttack then return _ENV.rz_FastAttack end
+    local FastAttack = {
+        Distance = 10000,
+        attackMobs = true,
+        attackPlayers = true,
+        Equipped = nil,
+        IsRunning = _G.FastAttack,
+        consecutiveFailures = 0,
+        maxConsecutiveFailures = 5
+    }
+
+    local function ProcessEnemies(OthersEnemies, Folder)
+        if not Folder or not FastAttack.attackMobs then return nil end
+        local BasePart = nil
+        for _, Enemy in Folder:GetChildren() do
+            if Enemy == LocalPlayer.Character or not IsAlive(Enemy) then continue end
+            local foundPart = GetRandomValidPart(Enemy)
+            if foundPart and LocalPlayer:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
+                table.insert(OthersEnemies, {Enemy, foundPart})
+                BasePart = foundPart
+            end
+        end
+        return BasePart
+    end
+
+    local function ProcessRealPlayers(OthersEnemies)
+        if not FastAttack.attackPlayers then return nil end
+        local BasePart = nil
+        for _, OtherPlayer in Players:GetPlayers() do
+            if OtherPlayer == LocalPlayer then continue end
+            local OtherChar = OtherPlayer.Character
+            if not IsAlive(OtherChar) then continue end
+            local foundPart = GetRandomValidPart(OtherChar)
+            if foundPart and LocalPlayer:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
+                table.insert(OthersEnemies, {OtherChar, foundPart})
+                BasePart = foundPart
+            end
+        end
+        return BasePart
+    end
+
+    function FastAttack:Attack(BasePart, OthersEnemies)
+        local _, Net, temp_RegisterAttack, temp_RegisterHit, _ = CheckAndGetCoreComponents()
+        if not (BasePart and OthersEnemies and #OthersEnemies > 0 and temp_RegisterAttack and temp_RegisterHit) then
+            self.consecutiveFailures = self.consecutiveFailures + 1
+            if self.consecutiveFailures >= self.maxConsecutiveFailures then
+                self.consecutiveFailures = 0
+                self.Equipped = LocalPlayer.Character and IsAlive(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            end
+            task.delay(0.5, function() self:AttackNearest() end)
+            return
+        end
+        self.consecutiveFailures = 0
+        temp_RegisterAttack:FireServer(Settings.ClickDelay or 0)
+        temp_RegisterHit:FireServer(BasePart, OthersEnemies)
+    end
+
+    function FastAttack:AttackNearest()
+        if not self.IsRunning then return end
+        local _, _, _, _, Enemies = CheckAndGetCoreComponents()
+        local OthersEnemies = {}
+        local Part1 = ProcessEnemies(OthersEnemies, Enemies)
+        local Part2 = ProcessRealPlayers(OthersEnemies)
+        if #OthersEnemies > 0 then
+            self:Attack(Part1 or Part2, OthersEnemies)
+        end
+    end
+
+    function FastAttack:BladeHits()
+        if not self.IsRunning then return end
+        local Equipped = LocalPlayer.Character and IsAlive(LocalPlayer.Character) and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if Equipped and Equipped.ToolTip ~= "Gun" then
+            self:AttackNearest()
+        end
+    end
+
+    task.spawn(function()
+        while true do
+            task.wait(Settings.ClickDelay)
+            if Settings.AutoClick and FastAttack.IsRunning then
+                FastAttack:BladeHits()
+            else
+                task.wait(0.1)
+            end
+        end
+    end)
+
+    _ENV.rz_FastAttack = FastAttack
+    return FastAttack
+end)()
+
+-- 秒殺 UI
+Tab3:AddSection({Name = "秒殺核心設定"})
+Tab3:AddToggle({
+    Name = "秒殺開關",
+    Default = _G.FastAttack,
+    Callback = function(state)
+        if _ENV.rz_FastAttack then
+            _ENV.rz_FastAttack.IsRunning = state
+            _G.FastAttack = state
+        end
+    end
+})
+
+Tab3:AddTextbox({
+    Name = "攻擊範圍",
+    Default = "10000",
+    TextDisappear = false,
+    Callback = function(text)
+        local num = tonumber(text) or 10000
+        num = math.clamp(num, 1, 10000)
+        if _ENV.rz_FastAttack then
+            _ENV.rz_FastAttack.Distance = num
+        end
+    end
+})
+
+Tab3:AddTextbox({
+    Name = "攻速延遲",
+    Default = "0.1",
+    TextDisappear = false,
+    Callback = function(text)
+        local num = tonumber(text) or 0.1
+        num = math.clamp(num, 0.01, 2)
+        Settings.ClickDelay = num
+    end
+})
+
+Tab3:AddToggle({
+    Name = "攻擊怪物",
+    Default = true,
+    Callback = function(state)
+        if _ENV.rz_FastAttack then _ENV.rz_FastAttack.attackMobs = state end
+    end
+})
+
+Tab3:AddToggle({
+    Name = "攻擊玩家",
+    Default = true,
+    Callback = function(state)
+        if _ENV.rz_FastAttack then _ENV.rz_FastAttack.attackPlayers = state end
+    end
+})
+
+Tab3:AddSection({Name = "移動加速"})
+Tab3:AddTextbox({
+    Name = "移動速度值",
+    Default = "50",
+    Callback = function(v)
+        getfenv().translateSpeed = tonumber(v) or 50
+    end
+})
+
+Tab3:AddToggle({
+    Name = "加速開關",
+    Default = false,
+    Callback = function(state)
+        getfenv().translateAccelEnabled = state
+        if state then
+            if getfenv().translateConnection then getfenv().translateConnection:Disconnect() end
+            getfenv().translateConnection = RunService.Heartbeat:Connect(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.MoveDirection.Magnitude > 0 then
+                    local accel = LocalPlayer.Character.Humanoid.MoveDirection * (getfenv().translateSpeed or 50) / 30
+                    LocalPlayer.Character:TranslateBy(accel)
+                end
+            end)
+        else
+            if getfenv().translateConnection then getfenv().translateConnection:Disconnect() end
+        end
+    end
+})
+
+-- ==================== 透視功能 ====================
+local ESPConfig = {
+    MainSwitch = false,
+    ShowNameDistance = false,
+    ShowTracer = false,
+    ShowHealth = false
+}
+
+local ESPElements = {}
+
+local function CleanupPlayerESP(player)
+    if not ESPElements[player.UserId] then return end
+    if ESPElements[player.UserId].NameHealthESP then ESPElements[player.UserId].NameHealthESP:Destroy() end
+    if ESPElements[player.UserId].NameHealthUpdateConn then ESPElements[player.UserId].NameHealthUpdateConn:Disconnect() end
+    if ESPElements[player.UserId].Tracer then ESPElements[player.UserId].Tracer:Remove() end
+    if ESPElements[player.UserId].TracerConn then ESPElements[player.UserId].TracerConn:Disconnect() end
+    ESPElements[player.UserId] = nil
+end
+
+local function CreateNameDistanceHealthESP(player)
+    if not player.Character or not player.Character:FindFirstChild("Head") then return end
+    local head = player.Character.Head
+    if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then ESPElements[player.UserId].NameHealthESP:Destroy() end
+
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "NameDistanceHealthESP"
+    billboardGui.Adornee = head
+    billboardGui.Size = UDim2.new(0, 120, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboardGui.AlwaysOnTop = true
+    billboardGui.Parent = head
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = billboardGui
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.Size = UDim2.new(1, 0, 0.33, 0)
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamSemibold
+
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Parent = billboardGui
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.Position = UDim2.new(0, 0, 0.33, 0)
+    healthLabel.Size = UDim2.new(1, 0, 0.33, 0)
+    healthLabel.TextColor3 = Color3.new(0, 1, 0)
+    healthLabel.TextScaled = true
+    healthLabel.Font = Enum.Font.Gotham
+
+    local distanceLabel = Instance.new("TextLabel")
+    distanceLabel.Parent = billboardGui
+    distanceLabel.BackgroundTransparency = 1
+    distanceLabel.Position = UDim2.new(0, 0, 0.66, 0)
+    distanceLabel.Size = UDim2.new(1, 0, 0.33, 0)
+    distanceLabel.TextColor3 = Color3.new(1, 0.5, 0)
+    distanceLabel.TextScaled = true
+    distanceLabel.Font = Enum.Font.Gotham
+
+    local updateConnection = RunService.RenderStepped:Connect(function()
+        if not billboardGui.Parent or not LocalPlayer.Character or not player.Character then return end
+        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+        if localRoot and targetRoot then
+            local distance = (localRoot.Position - targetRoot.Position).Magnitude
+            distanceLabel.Text = string.format("%.1f米", distance)
+        end
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            local health = math.floor(humanoid.Health)
+            local maxHealth = math.floor(humanoid.MaxHealth)
+            local healthPercent = health / maxHealth
+            if healthPercent > 0.7 then
+                healthLabel.TextColor3 = Color3.new(0, 1, 0)
+            elseif healthPercent > 0.3 then
+                healthLabel.TextColor3 = Color3.new(1, 1, 0)
+            else
+                healthLabel.TextColor3 = Color3.new(1, 0, 0)
+            end
+            healthLabel.Text = string.format("血量: %d/%d", health, maxHealth)
+        end
+    end)
+
+    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
+    ESPElements[player.UserId].NameHealthESP = billboardGui
+    ESPElements[player.UserId].NameHealthUpdateConn = updateConnection
+end
+
+local function CreateTracerESP(player)
+    if ESPElements[player.UserId] and ESPElements[player.UserId].Tracer then ESPElements[player.UserId].Tracer:Remove() end
+    local tracer = Drawing.new("Line")
+    tracer.Color = Color3.new(1, 0, 0)
+    tracer.Thickness = 2
+    tracer.Transparency = 0.8
+    tracer.Visible = false
+
+    local renderConnection = RunService.RenderStepped:Connect(function()
+        if not ESPConfig.MainSwitch or not ESPConfig.ShowTracer then tracer.Visible = false return end
+        local localChar = LocalPlayer.Character
+        local targetChar = player.Character
+        if not localChar or not targetChar then tracer.Visible = false return end
+        local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+        if targetRoot then
+            local screenPos, isVisible = Camera:WorldToViewportPoint(targetRoot.Position)
+            if isVisible then
+                tracer.Visible = true
+                tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+            else
+                tracer.Visible = false
+            end
+        else
+            tracer.Visible = false
+        end
+    end)
+
+    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
+    ESPElements[player.UserId].Tracer = tracer
+    ESPElements[player.UserId].TracerConn = renderConnection
+end
+
+local function UpdatePlayerESP(player)
+    if player == LocalPlayer then return end
+    if not player.Character or not player.Character:FindFirstChild("Head") or not player.Character:FindFirstChild("HumanoidRootPart") then
+        CleanupPlayerESP(player)
+        return
+    end
+    if ESPConfig.MainSwitch then
+        CreateTracerESP(player)
+        if ESPConfig.ShowNameDistance or ESPConfig.ShowHealth then
+            CreateNameDistanceHealthESP(player)
+        else
+            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then
+                ESPElements[player.UserId].NameHealthESP:Destroy()
+                ESPElements[player.UserId].NameHealthESP = nil
+            end
+            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthUpdateConn then
+                ESPElements[player.UserId].NameHealthUpdateConn:Disconnect()
+                ESPElements[player.UserId].NameHealthUpdateConn = nil
+            end
+        end
+    else
+        CleanupPlayerESP(player)
+    end
+end
+
+local function UpdateAllESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then UpdatePlayerESP(player) end
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player == LocalPlayer then return end
+    player.CharacterAdded:Connect(function() task.wait(1) UpdatePlayerESP(player) end)
+    player.CharacterRemoving:Connect(function() CleanupPlayerESP(player) end)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function() task.wait(2) UpdateAllESP() end)
+
+task.spawn(function()
+    while true do
+        task.wait(3)
+        if ESPConfig.MainSwitch then UpdateAllESP() end
+    end
+end)
+
+-- 透視 UI
+Tab4:AddSection({Name = "透視設定"})
+Tab4:AddToggle({Name = "透視總開關", Default = false, Callback = function(v) ESPConfig.MainSwitch = v UpdateAllESP() end})
+Tab4:AddToggle({Name = "顯示名字 + 距離", Default = false, Callback = function(v) ESPConfig.ShowNameDistance = v UpdateAllESP() end})
+Tab4:AddToggle({Name = "顯示血量", Default = false, Callback = function(v) ESPConfig.ShowHealth = v UpdateAllESP() end})
+Tab4:AddToggle({Name = "射線追蹤", Default = false, Callback = function(v) ESPConfig.ShowTracer = v UpdateAllESP() end})
+
+-- ==================== 傳送 ====================
+Tab5:AddSection({Name = "海域傳送"})
+Tab5:AddButton({Name = "傳送至一海", Callback = function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelMain") end})
+Tab5:AddButton({Name = "傳送至二海", Callback = function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelDressrosa") end})
+Tab5:AddButton({Name = "傳送至三海", Callback = function() ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelZou") end})
+
+Tab5:AddSection({Name = "二海地點"})
+Tab5:AddButton({Name = "天鵝的房間", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-287.37, 305.81, 592.98) end end})
+Tab5:AddButton({Name = "豪宅", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(2286.93, 15.06, 910.51) end end})
+Tab5:AddButton({Name = "鬼船內部", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-6501.06, 83.11, -123.52) end end})
+Tab5:AddButton({Name = "鬼船外部", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(922.78, 123.96, 32842.40) end end})
+
+Tab5:AddSection({Name = "三海地點"})
+Tab5:AddButton({Name = "海洋城堡", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12463.60, 376.26, -7566.08) end end})
+Tab5:AddButton({Name = "海龜豪宅", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5060.41, 316.43, -3192.30) end end})
+Tab5:AddButton({Name = "司法島", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5096.48, 316.43, -3177.91) end end})
+Tab5:AddButton({Name = "九頭蛇島", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5027.03, 316.43, -3206.07) end end})
+
+-- 初始化 ESP
+task.spawn(function()
+    task.wait(3)
+    UpdateAllESP()
+end)
+
+OrionLib:Init()
