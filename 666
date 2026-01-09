@@ -133,7 +133,7 @@ Module.FastAttack = (function()
     if _ENV.rz_FastAttack then return _ENV.rz_FastAttack end
     local FastAttack = {
         Distance = 100000,  -- 大範圍
-        attackMobs = false,  -- 只攻擊玩家，關閉怪物
+        attackMobs = ture,  -- 只攻擊玩家，關閉怪物
         attackPlayers = true,
         Equipped = nil,
         IsRunning = _G.FastAttack,
@@ -444,4 +444,4 @@ task.spawn(function()
     UpdateAllESP()
 end)
 
-OrionLib:Init()
+OrionLib:Init(true)
