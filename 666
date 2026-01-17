@@ -1,0 +1,198 @@
+-- 服務
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local Camera = Workspace.CurrentCamera
+
+-- 設定表
+local Settings = {
+    AutoClick = true,
+    ClickDelay = 0.12,
+    Distance = 5000,
+    AttackMobs = true,
+    AttackPlayers = false,
+    AutoV4 = false,
+    
+    -- 移動加速
+    TranslateAccelEnabled = false,
+    TranslateAccelSpeed = 50,
+    
+    -- ESP
+    ESP_Main = false,
+    ESP_NameDistance = false,
+    ESP_Health = false,
+    ESP_Tracer = false
+}
+
+-- 全域變數
+local FastAttack = nil
+local autoV4Task = nil
+local translateConnection = nil
+local ScreenGui = nil
+local MainFrame = nil
+local ESPElements = {}
+local CurrentTab = "Attack"  -- 預設 Tab
+local IsCollapsed = false  -- UI 摺疊狀態
+local TabConnections = {}  -- 儲存所有 Connection
+
+-- 安全等待
+local function SafeWaitForChild(parent, childName, timeout)
+    timeout = timeout or 10
+    local success, result = pcall(function()
+        return parent:WaitForChild(childName, timeout)
+    end)
+    return success and result or nil
+end
+
+-- FastAttack、V4、Accel、ESP 邏輯 (與之前相同，略微優化以節省空間)
+local function CheckAndGetCoreComponents()
+    local Remotes = SafeWaitForChild(ReplicatedStorage, "Remotes")
+    local Modules = SafeWaitForChild(ReplicatedStorage, "Modules")
+    local Net = Modules and SafeWaitForChild(Modules, "Net")
+    local RegisterAttack = Net and SafeWaitForChild(Net, "RE/RegisterAttack")
+    local RegisterHit = Net and SafeWaitForChild(Net, "RE/RegisterHit")
+    local Enemies = SafeWaitForChild(Workspace, "Enemies")
+    return Remotes, Net, RegisterAttack, RegisterHit, Enemies
+end
+
+local function IsAlive(character)
+    return character and character:FindFirstChildOfClass("Humanoid") and character:FindFirstChildOfClass("Humanoid").Health > 0
+end
+
+local function GetBestValidPart(target)
+    return target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target:FindFirstChildWhichIsA("BasePart")
+end
+
+FastAttack = {IsRunning = true, consecutiveFailures = 0, maxConsecutiveFailures = 5}
+
+function FastAttack:Attack(BasePart, OthersEnemies)
+    local _, _, ra, rh = CheckAndGetCoreComponents()
+    if not (BasePart and OthersEnemies and #OthersEnemies > 0 and ra and rh) then
+        self.consecutiveFailures = self.consecutiveFailures + 1
+        if self.consecutiveFailures >= self.maxConsecutiveFailures then self.consecutiveFailures = 0 end
+        return
+    end
+    self.consecutiveFailures = 0
+    ra:FireServer(Settings.ClickDelay)
+    rh:FireServer(BasePart, OthersEnemies)
+end
+
+function FastAttack:AttackNearest()
+    if not self.IsRunning or not Settings.AutoClick then return end
+    local _, _, _, _, Enemies = CheckAndGetCoreComponents()
+    local OthersEnemies = {}
+    local closestPart, closestDist = nil, Settings.Distance
+    if Settings.AttackMobs and Enemies then
+        for _, e in Enemies:GetChildren() do
+            if IsAlive(e) and e ~= Player.Character then
+                local part = GetBestValidPart(e)
+                if part then
+                    local dist = Player:DistanceFromCharacter(part.Position)
+                    if dist < closestDist then closestDist, closestPart = dist, part end
+                    table.insert(OthersEnemies, {e, part})
+                end
+            end
+        end
+    end
+    if Settings.AttackPlayers then
+        for _, p in Players:GetPlayers() do
+            if p ~= Player and IsAlive(p.Character) then
+                local part = GetBestValidPart(p.Character)
+                if part then
+                    local dist = Player:DistanceFromCharacter(part.Position)
+                    if dist < closestDist then closestDist, closestPart = dist, part end
+                    table.insert(OthersEnemies, {p.Character, part})
+                end
+            end
+        end
+    end
+    if #OthersEnemies > 0 then self:Attack(closestPart, OthersEnemies) end
+end
+
+function FastAttack:BladeHits()
+    local char = Player.Character
+    if IsAlive(char) then
+        local tool = char:FindFirstChildOfClass("Tool")
+        if tool and tool.ToolTip ~= "Gun" then self:AttackNearest() end
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if Settings.AutoClick and FastAttack.IsRunning then FastAttack:BladeHits() end
+end)
+
+-- Auto V4
+local function callAwakeningRemote()
+    local bp = Player.Backpack
+    local awakening = bp and bp:FindFirstChild("Awakening")
+    local rf = awakening and awakening:FindFirstChild("RemoteFunction")
+    if rf then pcall(rf.InvokeServer, rf, true) end
+end
+
+local function toggleAutoV4(enable)
+    if autoV4Task then task.cancel(autoV4Task); autoV4Task = nil end
+    if enable then
+        autoV4Task = task.spawn(function()
+            while Settings.AutoV4 do callAwakeningRemote(); task.wait(1) end
+        end)
+    end
+end
+
+-- 移動加速
+local function toggleTranslateAccel(enable)
+    if translateConnection then translateConnection:Disconnect(); translateConnection = nil end
+    if enable then
+        translateConnection = RunService.Heartbeat:Connect(function()
+            local char = Player.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum and hum.MoveDirection.Magnitude > 0 then
+                char:TranslateBy(hum.MoveDirection * (Settings.TranslateAccelSpeed or 50) / 30)
+            end
+        end)
+    end
+end
+
+-- ESP (優化版)
+local function CleanupPlayerESP(player)
+    local elements = ESPElements[player.UserId]
+    if elements then
+        if elements.NameHealthESP then elements.NameHealthESP:Destroy() end
+        if elements.NameHealthUpdateConn then elements.NameHealthUpdateConn:Disconnect() end
+        if elements.Tracer then elements.Tracer:Remove() end
+        if elements.TracerConn then elements.TracerConn:Disconnect() end
+        ESPElements[player.UserId] = nil
+    end
+end
+
+local function CreateNameDistanceHealthESP(player)
+    if player == Player or not player.Character then return end
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+    CleanupPlayerESP(player)  -- 清理舊的
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "ESP"
+    bb.Adornee = head
+    bb.Size = UDim2.new(0, 150, 0, 70)
+    bb.StudsOffset = Vector3.new(0, 4, 0)
+    bb.AlwaysOnTop = true
+    bb.Parent = head
+    local nameL = Instance.new("TextLabel", bb)
+    nameL.Size = UDim2.new(1, 0, 1/3, 0)
+    nameL.BackgroundTransparency = 1
+    nameL.Text = player.Name
+    nameL.TextColor3 = Color3.new(1,1,1)
+    nameL.TextScaled = true
+    nameL.Font = Enum.Font.GothamBold
+    local hpL = Instance.new("TextLabel", bb)
+    hpL.Size = UDim2.new(1, 0, 1/3, 0)
+    hpL.Position = UDim2.new(0,0,1/3,0)
+    hpL.BackgroundTransparency = 1
+    hpL.TextScaled = true
+    hpL.Font = Enum.Font.Gotham
+    local distL = Instance.new("TextLabel", bb)
+    distL.Size = UDim2.new(1, 0, 1/3,
