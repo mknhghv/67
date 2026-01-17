@@ -1,0 +1,62 @@
+-- 先載入 CATui 庫
+local CATui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/CATui"))()
+
+-- 初始化 UI
+local Lib = CATui:Init()
+
+-- 創建分頁（Tab）
+local AttackTab = Lib:CreateTab("Attack", true)   -- 預設開啟
+local MiscTab = Lib:CreateTab("Misc")
+local ESPTab = Lib:CreateTab("ESP")
+
+-- 攻擊 Tab 內容（用 AddButton / AddInfo 代替 Toggle/Slider）
+AttackTab:AddButton("自動攻擊: 開啟", function(btn)
+    Settings.AutoClick = not Settings.AutoClick
+    btn.Text = "自動攻擊: " .. (Settings.AutoClick and "✅ 開啟" or "❌ 關閉")
+end)
+
+AttackTab:AddButton("攻擊怪物: 開啟", function(btn)
+    Settings.AttackMobs = not Settings.AttackMobs
+    btn.Text = "攻擊怪物: " .. (Settings.AttackMobs and "✅ 開啟" or "❌ 關閉")
+end)
+
+AttackTab:AddButton("攻擊玩家: 關閉", function(btn)
+    Settings.AttackPlayers = not Settings.AttackPlayers
+    btn.Text = "攻擊玩家: " .. (Settings.AttackPlayers and "✅ 開啟" or "❌ 關閉 (危險)")
+end)
+
+-- 其他按鈕...
+AttackTab:AddInfo("提示", "裝備近戰武器後自動超速攻擊！")
+
+-- Misc Tab（AutoV4 + 加速）
+MiscTab:AddButton("自動V4: 關閉", function(btn)
+    Settings.AutoV4 = not Settings.AutoV4
+    toggleAutoV4(Settings.AutoV4)
+    btn.Text = "自動V4: " .. (Settings.AutoV4 and "✅ 開啟" or "❌ 關閉")
+end)
+
+MiscTab:AddButton("移動加速: 關閉", function(btn)
+    Settings.TranslateAccelEnabled = not Settings.TranslateAccelEnabled
+    toggleTranslateAccel(Settings.TranslateAccelEnabled)
+    btn.Text = "移動加速: " .. (Settings.TranslateAccelEnabled and "✅ 開啟" or "❌ 關閉")
+end)
+
+MiscTab:AddInfo("加速說明", "倍率越高跑越快，但小心卡頓或檢測")
+
+-- ESP Tab
+ESPTab:AddButton("透視總開關: 關閉", function(btn)
+    Settings.ESP_Main = not Settings.ESP_Main
+    UpdateAllESP()
+    btn.Text = "透視總開關: " .. (Settings.ESP_Main and "✅ 開啟" or "❌ 關閉")
+end)
+
+ESPTab:AddButton("名字+距離: 關閉", function(btn)
+    Settings.ESP_NameDistance = not Settings.ESP_NameDistance
+    UpdateAllESP()
+    btn.Text = "名字+距離: " .. (Settings.ESP_NameDistance and "✅ 開啟" or "❌ 關閉")
+end)
+
+-- ... 同樣加血量、Tracer
+
+-- 初始狀態文字（可選再加）
+AttackTab:AddInfo("狀態", "初始攻速延遲: " .. Settings.ClickDelay .. "秒 | 範圍: " .. Settings.Distance)
