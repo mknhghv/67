@@ -1,0 +1,507 @@
+-- 服務
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local Camera = Workspace.CurrentCamera
+
+-- 設定表
+local Settings = {
+    AutoClick = true,
+    ClickDelay = 0.12,
+    Distance = 5000,
+    AttackMobs = true,
+    AttackPlayers = false,
+    AutoV4 = false,
+    
+    -- 移動加速
+    TranslateAccelEnabled = false,
+    TranslateAccelSpeed = 50,
+    
+    -- ESP
+    ESP_Main = false,
+    ESP_NameDistance = false,
+    ESP_Health = false,
+    ESP_Tracer = false
+}
+
+-- 全域變數
+local FastAttack = nil
+local autoV4Task = nil
+local translateConnection = nil
+local ScreenGui = nil
+local MainFrame = nil
+local ESPElements = {}
+local CurrentTab = "Attack"  -- 預設 Tab
+local IsCollapsed = false  -- UI 摺疊狀態
+
+-- 安全等待
+local function SafeWaitForChild(parent, childName, timeout)
+    timeout = timeout or 10
+    local success, result = pcall(function()
+        return parent:WaitForChild(childName, timeout)
+    end)
+    return success and result or nil
+end
+
+-- FastAttack、V4、Accel、ESP 邏輯 (與之前相同)
+local function CheckAndGetCoreComponents()
+    local Remotes = SafeWaitForChild(ReplicatedStorage, "Remotes")
+    local Modules = SafeWaitForChild(ReplicatedStorage, "Modules")
+    local Net = Modules and SafeWaitForChild(Modules, "Net")
+    local RegisterAttack = Net and SafeWaitForChild(Net, "RE/RegisterAttack")
+    local RegisterHit = Net and SafeWaitForChild(Net, "RE/RegisterHit")
+    local Enemies = SafeWaitForChild(Workspace, "Enemies")
+    return Remotes, Net, RegisterAttack, RegisterHit, Enemies
+end
+
+local function IsAlive(character)
+    return character and character:FindFirstChildOfClass("Humanoid") and character:FindFirstChildOfClass("Humanoid").Health > 0
+end
+
+local function GetBestValidPart(target)
+    return target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Head") or target:FindFirstChild("UpperTorso") or target:FindFirstChildWhichIsA("BasePart")
+end
+
+FastAttack = {IsRunning = true, consecutiveFailures = 0, maxConsecutiveFailures = 5}
+
+function FastAttack:Attack(BasePart, OthersEnemies)
+    local _, _, ra, rh = CheckAndGetCoreComponents()
+    if not (BasePart and OthersEnemies and #OthersEnemies > 0 and ra and rh) then
+        self.consecutiveFailures = self.consecutiveFailures + 1
+        if self.consecutiveFailures >= self.maxConsecutiveFailures then self.consecutiveFailures = 0 end
+        return
+    end
+    self.consecutiveFailures = 0
+    ra:FireServer(Settings.ClickDelay)
+    rh:FireServer(BasePart, OthersEnemies)
+end
+
+function FastAttack:AttackNearest()
+    if not self.IsRunning or not Settings.AutoClick then return end
+    local _, _, _, _, Enemies = CheckAndGetCoreComponents()
+    local OthersEnemies = {}
+    local closestPart, closestDist = nil, Settings.Distance
+    if Settings.AttackMobs and Enemies then
+        for _, e in Enemies:GetChildren() do
+            if IsAlive(e) and e ~= Player.Character then
+                local part = GetBestValidPart(e)
+                if part then
+                    local dist = Player:DistanceFromCharacter(part.Position)
+                    if dist < closestDist then closestDist, closestPart = dist, part end
+                    table.insert(OthersEnemies, {e, part})
+                end
+            end
+        end
+    end
+    if Settings.AttackPlayers then
+        for _, p in Players:GetPlayers() do
+            if p ~= Player and IsAlive(p.Character) then
+                local part = GetBestValidPart(p.Character)
+                if part then
+                    local dist = Player:DistanceFromCharacter(part.Position)
+                    if dist < closestDist then closestDist, closestPart = dist, part end
+                    table.insert(OthersEnemies, {p.Character, part})
+                end
+            end
+        end
+    end
+    if #OthersEnemies > 0 then self:Attack(closestPart, OthersEnemies) end
+end
+
+function FastAttack:BladeHits()
+    local char = Player.Character
+    if IsAlive(char) then
+        local tool = char:FindFirstChildOfClass("Tool")
+        if tool and tool.ToolTip ~= "Gun" then self:AttackNearest() end
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if Settings.AutoClick and FastAttack.IsRunning then FastAttack:BladeHits() end
+end)
+
+-- Auto V4
+local function callAwakeningRemote()
+    local bp = Player.Backpack
+    local awakening = bp and bp:FindFirstChild("Awakening")
+    local rf = awakening and awakening:FindFirstChild("RemoteFunction")
+    if rf then pcall(rf.InvokeServer, rf, true) end
+end
+
+local function toggleAutoV4(enable)
+    if autoV4Task then task.cancel(autoV4Task); autoV4Task = nil end
+    if enable then
+        autoV4Task = task.spawn(function()
+            while Settings.AutoV4 do callAwakeningRemote(); task.wait(1) end
+        end)
+    end
+end
+
+-- 移動加速
+local function toggleTranslateAccel(enable)
+    if translateConnection then translateConnection:Disconnect(); translateConnection = nil end
+    if enable then
+        translateConnection = RunService.Heartbeat:Connect(function()
+            local char = Player.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum and hum.MoveDirection.Magnitude > 0 then
+                char:TranslateBy(hum.MoveDirection * (Settings.TranslateAccelSpeed or 50) / 30)
+            end
+        end)
+    end
+end
+
+-- ESP
+local function CleanupPlayerESP(player)
+    local elements = ESPElements[player.UserId]
+    if elements then
+        if elements.NameHealthESP then elements.NameHealthESP:Destroy() end
+        if elements.NameHealthUpdateConn then elements.NameHealthUpdateConn:Disconnect() end
+        if elements.Tracer then elements.Tracer:Remove() end
+        if elements.TracerConn then elements.TracerConn:Disconnect() end
+        ESPElements[player.UserId] = nil
+    end
+end
+
+local function CreateNameDistanceHealthESP(player)
+    if player == Player or not player.Character then return end
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+    CleanupPlayerESP(player)
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "ESP"
+    bb.Adornee = head
+    bb.Size = UDim2.new(0, 150, 0, 70)
+    bb.StudsOffset = Vector3.new(0, 4, 0)
+    bb.AlwaysOnTop = true
+    bb.Parent = head
+    local nameL = Instance.new("TextLabel", bb)
+    nameL.Size = UDim2.new(1, 0, 1/3, 0)
+    nameL.BackgroundTransparency = 1
+    nameL.Text = player.Name
+    nameL.TextColor3 = Color3.new(1,1,1)
+    nameL.TextScaled = true
+    nameL.Font = Enum.Font.GothamBold
+    local hpL = Instance.new("TextLabel", bb)
+    hpL.Size = UDim2.new(1, 0, 1/3, 0)
+    hpL.Position = UDim2.new(0,0,1/3,0)
+    hpL.BackgroundTransparency = 1
+    hpL.TextScaled = true
+    hpL.Font = Enum.Font.Gotham
+    local distL = Instance.new("TextLabel", bb)
+    distL.Size = UDim2.new(1, 0, 1/3, 0)
+    distL.Position = UDim2.new(0,0,2/3,0)
+    distL.BackgroundTransparency = 1
+    distL.TextScaled = true
+    distL.Font = Enum.Font.Gotham
+    local conn = RunService.RenderStepped:Connect(function()
+        if not bb.Parent or not Player.Character then return end
+        local hrp = Player.Character:FindFirstChild("HumanoidRootPart")
+        local tHrp = player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and tHrp then
+            local dist = (hrp.Position - tHrp.Position).Magnitude
+            distL.Text = string.format("%.1fm", dist)
+            distL.TextColor3 = Color3.new(1,0.5,0)
+        end
+        local hum = player.Character:FindFirstChild("Humanoid")
+        if hum then
+            local hp = math.floor(hum.Health)
+            local max = math.floor(hum.MaxHealth)
+            local percent = hp / max
+            hpL.TextColor3 = (percent > 0.7 and Color3.new(0,1,0)) or (percent > 0.3 and Color3.new(1,1,0)) or Color3.new(1,0,0)
+            hpL.Text = string.format("HP: %d/%d", hp, max)
+        end
+    end)
+    ESPElements[player.UserId] = {NameHealthESP = bb, NameHealthUpdateConn = conn}
+end
+
+local function CreateTracerESP(player)
+    local tracer = Drawing.new("Line")
+    tracer.Color = Color3.new(1, 0.2, 0.2)
+    tracer.Thickness = 2
+    tracer.Transparency = 0.7
+    tracer.Visible = false
+    local conn = RunService.RenderStepped:Connect(function()
+        tracer.Visible = false
+        if not Settings.ESP_Main or not Settings.ESP_Tracer or not player.Character or not Player.Character then return end
+        local target = player.Character:FindFirstChild("HumanoidRootPart")
+        if target then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(target.Position)
+            if onScreen then
+                tracer.Visible = true
+                tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+            end
+        end
+    end)
+    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
+    ESPElements[player.UserId].Tracer = tracer
+    ESPElements[player.UserId].TracerConn = conn
+end
+
+local function UpdatePlayerESP(player)
+    if player == Player then return end
+    CleanupPlayerESP(player)
+    if not Settings.ESP_Main or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    if Settings.ESP_Tracer then CreateTracerESP(player) end
+    if Settings.ESP_NameDistance or Settings.ESP_Health then CreateNameDistanceHealthESP(player) end
+end
+
+local function UpdateAllESP()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= Player then UpdatePlayerESP(p) end
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if p == Player then return end
+    p.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        UpdatePlayerESP(p)
+    end)
+    p.CharacterRemoving:Connect(function()
+        CleanupPlayerESP(p)
+    end)
+end)
+
+-- UI 創建 (新版：Tab + 摺疊 + 手機適配)
+local function CreateUI()
+    if ScreenGui then ScreenGui:Destroy() end
+    
+    ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "UltimateHubUI"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = PlayerGui
+    
+    MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Parent = ScreenGui
+    
+    local corner = Instance.new("UICorner", MainFrame)
+    corner.CornerRadius = UDim.new(0, 15)
+    
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 50)
+    titleBar.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+    titleBar.Parent = MainFrame
+    
+    local titleCorner = Instance.new("UICorner", titleBar)
+    titleCorner.CornerRadius = UDim.new(0, 15)
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -80, 1, 0)
+    title.Position = UDim2.new(0, 15, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "✨ Ultimate Hub"
+    title.TextColor3 = Color3.new(0.9, 0.9, 1)
+    title.TextSize = 20
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = titleBar
+    
+    local collapseBtn = Instance.new("TextButton")
+    collapseBtn.Size = UDim2.new(0, 40, 0, 40)
+    collapseBtn.Position = UDim2.new(1, -50, 0, 5)
+    collapseBtn.BackgroundTransparency = 1
+    collapseBtn.Text = "▼"
+    collapseBtn.TextColor3 = Color3.new(1,1,1)
+    collapseBtn.TextSize = 24
+    collapseBtn.Parent = titleBar
+    
+    local function ToggleCollapse()
+        IsCollapsed = not IsCollapsed
+        collapseBtn.Text = IsCollapsed and "▶" or "▼"
+        local targetSize = IsCollapsed and UDim2.new(0, 300, 0, 50) or UDim2.new(0, 300, 0, 400)
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {Size = targetSize}):Play()
+    end
+    collapseBtn.MouseButton1Click:Connect(ToggleCollapse)
+    
+    -- Tab 按鈕
+    local tabFrame = Instance.new("Frame")
+    tabFrame.Size = UDim2.new(1, 0, 0, 50)
+    tabFrame.Position = UDim2.new(0, 0, 0, 50)
+    tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    tabFrame.Parent = MainFrame
+    
+    local function MakeTabButton(name, posX)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 100, 1, 0)
+        btn.Position = UDim2.new(0, posX, 0, 0)
+        btn.BackgroundTransparency = 0.8
+        btn.Text = name
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.TextSize = 16
+        btn.Font = Enum.Font.Gotham
+        btn.Parent = tabFrame
+        btn.MouseButton1Click:Connect(function()
+            CurrentTab = name
+            UpdateTabContent()
+        end)
+        return btn
+    end
+    
+    MakeTabButton("Attack", 0)
+    MakeTabButton("Misc", 100)
+    MakeTabButton("ESP", 200)
+    
+    -- 內容容器
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Size = UDim2.new(1, 0, 1, -100)
+    contentFrame.Position = UDim2.new(0, 0, 0, 100)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.ScrollBarThickness = 5
+    contentFrame.Parent = MainFrame
+    
+    -- 更新 Tab 內容
+    local function UpdateTabContent()
+        for _, child in contentFrame:GetChildren() do
+            if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then child:Destroy() end
+        end
+        
+        local yPos = 10
+        local function AddToggle(name, key, default)
+            local toggle = Instance.new("TextButton")
+            toggle.Size = UDim2.new(1, -20, 0, 40)
+            toggle.Position = UDim2.new(0, 10, 0, yPos)
+            toggle.BackgroundColor3 = Settings[key] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+            toggle.Text = (Settings[key] and "✅ " or "❌ ") .. name
+            toggle.TextColor3 = Color3.new(1,1,1)
+            toggle.TextSize = 16
+            toggle.Font = Enum.Font.Gotham
+            toggle.Parent = contentFrame
+            Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+            toggle.MouseButton1Click:Connect(function()
+                Settings[key] = not Settings[key]
+                toggle.BackgroundColor3 = Settings[key] and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+                toggle.Text = (Settings[key] and "✅ " or "❌ ") .. name
+                if key == "AutoV4" then toggleAutoV4(Settings[key]) end
+                if key == "TranslateAccelEnabled" then toggleTranslateAccel(Settings[key]) end
+                if key == "ESP_Main" or key == "ESP_NameDistance" or key == "ESP_Health" or key == "ESP_Tracer" then UpdateAllESP() end
+            end)
+            yPos = yPos + 50
+        end
+        
+        local function AddSlider(label, key, min, max, default)
+            local sliderLabel = Instance.new("TextLabel")
+            sliderLabel.Size = UDim2.new(1, -20, 0, 25)
+            sliderLabel.Position = UDim2.new(0, 10, 0, yPos)
+            sliderLabel.BackgroundTransparency = 1
+            sliderLabel.Text = label .. ": " .. Settings[key]
+            sliderLabel.TextColor3 = Color3.new(1,1,1)
+            sliderLabel.TextSize = 16
+            sliderLabel.Font = Enum.Font.Gotham
+            sliderLabel.Parent = contentFrame
+            yPos = yPos + 30
+            
+            local sliderFrame = Instance.new("Frame")
+            sliderFrame.Size = UDim2.new(1, -20, 0, 20)
+            sliderFrame.Position = UDim2.new(0, 10, 0, yPos)
+            sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+            sliderFrame.Parent = contentFrame
+            Instance.new("UICorner", sliderFrame).CornerRadius = UDim.new(0, 10)
+            
+            local sliderBar = Instance.new("Frame", sliderFrame)
+            sliderBar.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+            sliderBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+            Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 10)
+            
+            local dragging = false
+            sliderFrame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
+            end)
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+            end)
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local relX = math.clamp((mousePos.X - sliderFrame.AbsolutePosition.X) / sliderFrame.AbsoluteSize.X, 0, 1)
+                    local value = min + (max - min) * relX
+                    value = math.floor(value * 10) / 10  -- 保留1位小數
+                    sliderBar.Size = UDim2.new(relX, 0, 1, 0)
+                    sliderLabel.Text = label .. ": " .. value
+                    Settings[key] = value
+                end
+            end)
+            yPos = yPos + 30
+        end
+        
+        if CurrentTab == "Attack" then
+            AddToggle("自動攻擊", "AutoClick", Settings.AutoClick)
+            AddToggle("攻擊怪物", "AttackMobs", Settings.AttackMobs)
+            AddToggle("攻擊玩家 (小心)", "AttackPlayers", Settings.AttackPlayers)
+            AddSlider("攻擊範圍", "Distance", 100, 10000, Settings.Distance)
+            AddSlider("攻擊延遲 (秒)", "ClickDelay", 0.05, 0.5, Settings.ClickDelay)
+        elseif CurrentTab == "Misc" then
+            AddToggle("自動V4", "AutoV4", Settings.AutoV4)
+            AddToggle("移動加速", "TranslateAccelEnabled", Settings.TranslateAccelEnabled)
+            AddSlider("加速倍率", "TranslateAccelSpeed", 10, 200, Settings.TranslateAccelSpeed)
+        elseif CurrentTab == "ESP" then
+            AddToggle("透視總開關", "ESP_Main", Settings.ESP_Main)
+            AddToggle("名字 + 距離", "ESP_NameDistance", Settings.ESP_NameDistance)
+            AddToggle("血量顯示", "ESP_Health", Settings.ESP_Health)
+            AddToggle("Tracer 射線", "ESP_Tracer", Settings.ESP_Tracer)
+        end
+        contentFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
+    end
+    
+    UpdateTabContent()
+    
+    -- 拖拽支持 (手機友好)
+    local dragging, dragStart, startPos
+    local function updateInput(input)
+        if dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then updateInput(input) end
+    end)
+    
+    -- 關閉按鈕
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 40, 0, 40)
+    closeBtn.Position = UDim2.new(0, 5, 0, 5)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = Color3.new(1,0.5,0.5)
+    closeBtn.TextSize = 24
+    closeBtn.Parent = titleBar
+    closeBtn.MouseButton1Click:Connect(function()
+        Settings.AutoV4 = false
+        toggleAutoV4(false)
+        Settings.TranslateAccelEnabled = false
+        toggleTranslateAccel(false)
+        for _, p in ipairs(Players:GetPlayers()) do CleanupPlayerESP(p) end
+        ScreenGui:Destroy()
+    end)
+end
+
+-- 初始化
+CreateUI()
+task.spawn(function()
+    task.wait(1)
+    UpdateAllESP()
+end)
+
+print("新 UI 已載入！支援手機觸摸，Tab 切換功能，摺疊隱藏。")
