@@ -1,5 +1,5 @@
 -- 加载Aimbot模块
-local Aim = loadstring(game:HttpGet("https://gist.githubusercontent.com/kismile36/e6ada131f67fcc3a5793eb81974511c8/raw/49fd45ac4b1164135fb81de2fda6231af55cb436/AIM%25E6%25A8%25A1%25E5%259D%2597"))()
+local Aim = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/aimbot%20(1).txt"))()
 
 local StarterGui = game:GetService("StarterGui")
 local VirtualUser = game:GetService("VirtualUser")
