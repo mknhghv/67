@@ -185,21 +185,54 @@ Tabs.GeneralTab:Button({
     Callback = function()
         WindUI:Notify({ Title = "移除岩漿", Content = "正在加載移除岩漿腳本...", Duration = 3 })
         pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/98krgqg/LAVAVAVA/refs/heads/main/NO%20LAVA"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/lava.txt"))()
         end)
     end
 })
 
+Tabs.GeneralTab:Button({
+    Title = "移除霧",
+    Icon = "fog",
+    Callback = function()
+        WindUI:Notify({ Title = "移除霧", Content = "正在加載移除霧腳本...", Duration = 3 })
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/fog.txt"))()
+        end)
+    end
+})
+
+Tabs.GeneralTab:Button({
+    Title = "減畫質",
+    Icon = "fps boost",
+    Callback = function()
+        WindUI:Notify({ Title = "減畫質", Content = "正在加載減畫質腳本...", Duration = 3 })
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/fps%20boost.txt"))()
+        end)
+    end
+})
 Tabs.GeneralTab:Button({
     Title = "bypasstp",
     Icon = "tp",
     Callback = function()
         WindUI:Notify({ Title = "bypasstp", Content = "正在加載bypasstp腳本...", Duration = 3 })
         pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/98krgqg/tp/refs/heads/main/Bypass"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/Bypass.txt"))()
         end)
     end
 })
+
+Tabs.GeneralTab:Button({
+    Title = "aimbot",
+    Icon = "aimbot",
+    Callback = function()
+        WindUI:Notify({ Title = "aimbot", Content = "正在加載aimbot腳本...", Duration = 3 })
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/a"))()
+        end)
+    end
+})
+
 -- ===================== 範圍攻擊標籤頁 =====================
 local _ENV = (getgenv or getrenv or getfenv)()
 local MIN_CLICK_DELAY = 0.0005
