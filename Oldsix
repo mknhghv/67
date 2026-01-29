@@ -223,7 +223,7 @@ Tabs.GeneralTab:Button({
 })
 
 Tabs.GeneralTab:Button({
-    Title = "aimbot",
+    Title = "aimbot(xeno無法使用)",
     Icon = "aimbot",
     Callback = function()
         WindUI:Notify({ Title = "Aim Skill", Content = "正在加載aimbot腳本...", Duration = 3 })
