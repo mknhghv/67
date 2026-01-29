@@ -226,7 +226,7 @@ Tabs.GeneralTab:Button({
     Title = "aimbot",
     Icon = "aimbot",
     Callback = function()
-        WindUI:Notify({ Title = "aimbot", Content = "正在加載aimbot腳本...", Duration = 3 })
+        WindUI:Notify({ Title = "Aim Skill", Content = "正在加載aimbot腳本...", Duration = 3 })
         pcall(function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/a"))()
         end)
@@ -914,19 +914,19 @@ local function startBuddhaLoop()
 end
 
 Tabs.ActivityTab:Toggle({
-    Title = "自動變身大佛＋拿刀",
+    Title = "自动变身大佛＋拿刀",
     Value = false,
     Callback = function(state)
         AUTO_BUDDHA_ENABLED = state
         if state then
             startBuddhaLoop()
-            WindUI:Notify({ Title = "自動變佛＋拿刀", Content = "功能已開啟", Duration = 2 })
+            WindUI:Notify({ Title = "自动变佛＋拿刀", Content = "功能已开启", Duration = 2 })
         else
             if buddhaTask then
                 task.cancel(buddhaTask)
                 buddhaTask = nil
             end
-            WindUI:Notify({ Title = "自動變佛＋拿刀", Content = "功能已關閉", Duration = 2 })
+            WindUI:Notify({ Title = "自动变佛＋拿刀", Content = "功能已关闭", Duration = 2 })
         end
     end
 })
@@ -937,6 +937,18 @@ LocalPlayer.CharacterAdded:Connect(function()
         startBuddhaLoop()
     end
 end)
+
+Tabs.ActivityTab:Divider()
+
+Tabs.ActivityTab:Button({
+    Title = "自動地牢",
+    Callback = function()
+        WindUI:Notify({ Title = "自動地牢", Content = "正在加载脚本...", Duration = 3 })
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E5%9C%B0%E7%89%A2"))()
+        end)
+    end
+})
 
 -- 特效顏色更換 
 Tabs.texiaoTab:Paragraph({
