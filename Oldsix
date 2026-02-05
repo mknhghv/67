@@ -174,7 +174,7 @@ Tabs.GeneralTab:Button({
     Callback = function()
         WindUI:Notify({ Title = "飛行", Content = "正在加載飛行腳本...", Duration = 3 })
         pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/s1050031-debug/jsaj/refs/heads/main/F"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/fly.txt"))()
         end)
     end
 })
