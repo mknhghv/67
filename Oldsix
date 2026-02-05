@@ -11,7 +11,7 @@ end
 -- 發送歡迎通知
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "老六腳本",
+        Title = "小軒腳本",
         Text = string.format("歡迎 %s，正在加載腳本...", LocalPlayer.Name),
         Duration = 5,
     })
@@ -39,7 +39,7 @@ end
 WindUI:SetTheme("Midnight")
 -- 基本通知
 WindUI:Notify({
-    Title = "老六腳本",
+    Title = "小軒腳本",
     Content = "加載中",
     Duration = 5,
 })
@@ -64,9 +64,9 @@ _G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
 
 -- 創建主窗口
 local Window = WindUI:CreateWindow({
-    Title = "老六中心",
+    Title = "小軒中心",
     Icon = "rbxassetid://6031280882",
-    Author = "_xingchen1",
+    Author = "小軒",
     Folder = "WindUI",
     Size = UDim2.fromOffset(580, 460),
     Transparent = false,
@@ -86,7 +86,7 @@ local functionSection = Window:Section({ Title = "主要功能", Opened = true }
 local configSection = Window:Section({ Title = "主題配置", Opened = true })
 
 Tabs.NoticeTab = noticeSection:Tab({ Title = "公告", Icon = "info" })
-Tabs.GeneralTab = functionSection:Tab({ Title = "功能1", Icon = "settings" })
+Tabs.GeneralTab = func tionSection:Tab({ Title = "功能1", Icon = "settings" })
 Tabs.AttackTab = functionSection:Tab({ Title = "範圍攻擊", Icon = "sword" })
 Tabs.ESPTab = functionSection:Tab({ Title = "透視", Icon = "eye" })
 Tabs.TeleportTab = functionSection:Tab({ Title = "傳送", Icon = "map-pin" })
@@ -96,8 +96,8 @@ Tabs.ThemeTab = configSection:Tab({ Title = "主題顏色", Icon = "palette" })
 
 -- ===================== 公告標籤頁 =====================
 Tabs.NoticeTab:Paragraph({
-    Title = "老六中心",
-    Desc = "哈哈哈",
+    Title = "小軒中心",
+    Desc = "初音是個蛋",
     Image = "info",
     Color = "Red"
 })
@@ -1187,14 +1187,14 @@ end)
 task.wait(1)
 -- 基本通知
 WindUI:Notify({
-    Title = "老六腳本",
+    Title = "小軒腳本",
     Content = "加載完成",
     Duration = 5,
 })
 
 Window:OnClose(function()
     WindUI:Notify({
-        Title = "老六中心",
+        Title = "小軒中心",
         Content = "界面已關閉\n按 G 重新打開",
         Duration = 3,
     })
