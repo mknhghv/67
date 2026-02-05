@@ -86,7 +86,7 @@ local functionSection = Window:Section({ Title = "主要功能", Opened = true }
 local configSection = Window:Section({ Title = "主題配置", Opened = true })
 
 Tabs.NoticeTab = noticeSection:Tab({ Title = "公告", Icon = "info" })
-Tabs.GeneralTab = func tionSection:Tab({ Title = "功能1", Icon = "settings" })
+Tabs.GeneralTab = functionSection:Tab({ Title = "功能1", Icon = "settings" })
 Tabs.AttackTab = functionSection:Tab({ Title = "範圍攻擊", Icon = "sword" })
 Tabs.ESPTab = functionSection:Tab({ Title = "透視", Icon = "eye" })
 Tabs.TeleportTab = functionSection:Tab({ Title = "傳送", Icon = "map-pin" })
