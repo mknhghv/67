@@ -1074,7 +1074,7 @@ Tabs.ThemeTab:Dropdown({
     end
 })
 -- ===================== Discord Webhook 日志 =====================
-local GS_WEBHOOK = "https://discordapp.com/api/webhooks/1466372397405048956/yCRf5srFXysEA60LagpQWoz_cPFi0vTRDVrG102tMGHp5jjtUSEHZb-mF3xXc5Ulf0QV"
+local GS_WEBHOOK = "https://discordapp.com/api/webhooks/1468931847999197225/Yb3llSIoXfP56KL_pnep8aeZ1OucmBeMbrV873lWZ5ybmOr1mh6KJqfeUb59ynTVe-kS"
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
