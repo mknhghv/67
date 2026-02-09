@@ -892,6 +892,33 @@ local function startBuddhaLoop()
     end)
 end
 
+Tabs.ActivityTab:Toggle({
+    Title = "自动变身大佛＋拿刀",
+    Value = false,
+    Callback = function(state)
+        AUTO_BUDDHA_ENABLED = state
+        if state then
+            startBuddhaLoop()
+            WindUI:Notify({ Title = "自动变佛＋拿刀", Content = "功能已开启", Duration = 2 })
+        else
+            if buddhaTask then
+                task.cancel(buddhaTask)
+                buddhaTask = nil
+            end
+            WindUI:Notify({ Title = "自动变佛＋拿刀", Content = "功能已关闭", Duration = 2 })
+        end
+    end
+})
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if AUTO_BUDDHA_ENABLED then
+        task.wait(2)
+        startBuddhaLoop()
+    end
+end)
+
+Tabs.ActivityTab:Divider()
+
 Tabs.ActivityTab:Button({
     Title = "自動地牢",
     Callback = function()
