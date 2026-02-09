@@ -56,6 +56,34 @@ Title.TextColor3 = Color3.fromRGB(220, 220, 230)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
 Title.Parent = Frame
+-- ==================== 自訂頂部你的 Meme 圖片 ====================
+local CustomTopImage = Instance.new("ImageLabel")
+CustomTopImage.Name = "CustomMemeTop"
+CustomTopImage.Size = UDim2.new(0, 160, 0, 180)           -- 放大一點，讓外星人大佛+文字清楚
+CustomTopImage.Position = UDim2.new(0.5, -80, 0, -60)     -- 置中在上方，突出 Frame 邊緣
+CustomTopImage.AnchorPoint = Vector2.new(0.5, 1)          -- 底部對齊，讓它像「帽子」一樣浮在上
+CustomTopImage.BackgroundTransparency = 1
+CustomTopImage.Image = "rbxassetid://1705107759"          -- 你的 ID，直接用！
+CustomTopImage.ScaleType = Enum.ScaleType.Fit             -- 完整顯示，不變形
+CustomTopImage.ResampleMode = Enum.ResamplerMode.Pixelated -- 如果像素風格更好看，可改 Default
+CustomTopImage.ZIndex = 10
+CustomTopImage.Parent = Frame
+
+-- 加圓角 + 邊框（讓它更兇、更突出）
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 20)
+uiCorner.Parent = CustomTopImage
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 4
+uiStroke.Color = Color3.fromRGB(255, 0, 0)  -- 紅邊框，配「急哭」主題
+uiStroke.Transparency = 0.3
+uiStroke.Parent = CustomTopImage
+
+-- 調整 Title 位置，避免被圖擋住文字
+Title.Position = UDim2.new(0, 0, 0, 90)   -- 往下移更多空間
+Title.Size = UDim2.new(1, 0, 0, 28)       -- 稍微縮小標題高度
+Title.TextSize = 18                       -- 如果文字太大，可再調
 
 -- 分隔線
 local Line = Instance.new("Frame")
