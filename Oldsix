@@ -897,7 +897,7 @@ Tabs.ActivityTab:Button({
     Callback = function()
         WindUI:Notify({ Title = "自動地牢", Content = "正在加载脚本...", Duration = 3 })
         pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/%E5%9C%B0%E7%89%A2"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/d2"))()
         end)
     end
 })
@@ -929,93 +929,12 @@ Tabs.texiaoTab:Paragraph({
     Image = "info",
     Color = "Red"
 })
-
-Tabs.texiaoTab:Button({
-    Title = "白色",
-    Callback = function()
-        WindUI:Notify({ Title = "白色", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/bai"))()
-        end)
-    end
-})
-
 Tabs.texiaoTab:Button({
     Title = "藍色",
     Callback = function()
         WindUI:Notify({ Title = "藍色", Content = "正在加載腳本...", Duration = 3 })
         pcall(function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E8%93%9D"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "紅色",
-    Callback = function()
-        WindUI:Notify({ Title = "紅色", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E7%BA%A2"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "綠色",
-    Callback = function()
-        WindUI:Notify({ Title = "綠色", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E7%BB%BF%E8%89%B2"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "七彩炫光",
-    Callback = function()
-        WindUI:Notify({ Title = "七彩炫光", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E4%B8%83%E5%BD%A9%E7%82%AB%E5%85%89"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "地獄火",
-    Callback = function()
-        WindUI:Notify({ Title = "地獄火", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E5%9C%B0%E7%8B%B1%E7%81%AB"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "未來科技（稍微卡頓）",
-    Callback = function()
-        WindUI:Notify({ Title = "地獄火", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E6%9C%AA%E6%9D%A5%E7%A7%91%E6%8A%80"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "生化危機",
-    Callback = function()
-        WindUI:Notify({ Title = "生化危機", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E7%94%9F%E5%8C%96%E5%8D%B1%E6%9C%BA"))()
-        end)
-    end
-})
-
-Tabs.texiaoTab:Button({
-    Title = "電磁脈衝",
-    Callback = function()
-        WindUI:Notify({ Title = "生化危機", Content = "正在加載腳本...", Duration = 3 })
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ttker951-dot/col/refs/heads/main/%E7%94%B5%E7%A3%81%E8%84%89%E5%86%B2"))()
         end)
     end
 })
