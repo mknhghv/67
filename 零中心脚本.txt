@@ -115,15 +115,7 @@ end)
 -- 缝合
 
 about:Button("飞行",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fly.lua"))()
-end)
-
-about:Button("法天象地",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile36/rjrzhongxing/refs/heads/main/rjr/fatianxiangdi"))()
-end)
-
-about:Button("fps优化（关闭不了一点傻逼）",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/kismile236/rjrym/refs/heads/main/fpsboost"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/fly.txt"))()
 end)
 
 about:Button("hoho",function()
