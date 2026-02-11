@@ -1,3 +1,8 @@
+-- Blox Fruits 大佛打本腳本 (小圖標可拖拽版，已移除自動V3與自動V4)
+-- 小圖標可拖拽：按住移動位置，點擊切換主UI顯示/隱藏
+-- 主UI (RedzLib) 視窗預設可拖拽
+-- 注意：使用腳本有封號風險，請自行負責
+
 local v643 = 1
 local World2 = game.PlaceId == 4442272183 or game.PlaceId == 79091703265657
 local World3 = game.PlaceId == 4442272183 or game.PlaceId == 79091703265657
@@ -10,11 +15,8 @@ _G.Dungeon = false
 _G.CurrentRaidIsland = 0
 _G.Autofruit = false
 _G.FastAttack = true
-_G.ToggleStates["自动V4"] = true
-_G.ToggleStates["自动V3"] = false
 local AutoHakiEnabled = false
 local autoHakiTask = nil
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
@@ -45,6 +47,7 @@ function topos(Pos)
         {CFrame = Pos}
     ):Play()
 end
+
 function StopTween(target)
     if not target then
         _G.StopTween = true
@@ -67,12 +70,10 @@ local function GetNearestIsland(islandNum)
     local targetIslandName = "Island " .. islandNum
     local targetIsland = locations:FindFirstChild(targetIslandName)
     if not targetIsland then return nil end
-
     local localPlayer = game.Players.LocalPlayer
     local character = localPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local playerHRP = character.HumanoidRootPart
-
     local nearestDist = 4500
     local nearestIsland = nil
     for _, child in ipairs(locations:GetChildren()) do
@@ -86,12 +87,12 @@ local function GetNearestIsland(islandNum)
     end
     return nearestIsland
 end
+
 local function GetAvailableIsland()
     local localPlayer = game.Players.LocalPlayer
     local character = localPlayer.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local playerHRP = character.HumanoidRootPart
-
     for _, num in ipairs({5,4,3,2,1}) do
         if num > _G.CurrentRaidIsland then
             local island = GetNearestIsland(num)
@@ -112,6 +113,7 @@ local vu616 = loadstring(game:HttpGet("https://raw.githubusercontent.com/fareham
     SubTitle = "by kismile",
     SaveFolder = ""
 })
+
 local v617 = Instance.new("ScreenGui", game.CoreGui)
 v617.Name = "ControlGUI"
 local vu618 = Instance.new("ImageButton", v617)
@@ -123,10 +125,12 @@ local v619 = Instance.new("UICorner", vu618)
 v619.CornerRadius = UDim.new(0.25, 0)
 local vu620 = true
 local vu621, vu622, vu623, vu624 = nil, nil, nil, nil
+
 local function vu627(p625)
     local v626 = p625.Position - vu623
     vu618.Position = UDim2.new(vu624.X.Scale, vu624.X.Offset + v626.X, vu624.Y.Scale, vu624.Y.Offset + v626.Y)
 end
+
 vu618.InputBegan:Connect(function(pu628)
     if pu628.UserInputType == Enum.UserInputType.Touch or pu628.UserInputType == Enum.MouseButton1 then
         vu621 = true
@@ -134,16 +138,19 @@ vu618.InputBegan:Connect(function(pu628)
         vu624 = vu618.Position
     end
 end)
+
 vu618.InputChanged:Connect(function(p629)
     if p629.UserInputType == Enum.UserInputType.Touch or p629.UserInputType == Enum.MouseMovement then
         vu622 = p629
     end
 end)
+
 UserInputService.InputChanged:Connect(function(p630)
     if vu621 and p630 == vu622 then
         vu627(p630)
     end
 end)
+
 vu618.MouseButton1Click:Connect(function()
     vu620 = not vu620
     vu616:Minimize(not vu620)
@@ -152,71 +159,40 @@ end)
 local v644 = vu616.MakeTab(v643, {"Raid Fruits", "cherry"})
 v644:AddSection({"打本"})
 v644:AddDropdown({
-    Name = "选择买票",
+    Name = "選擇買票",
     Options = {"Flame","Ice","Sand","Dark","Light","Magma","Quake","Buddha","Spider","Phoenix","Lightning","Dough"},
     Default = "Flame",
     Callback = function(val) _G.SelectChip = val end
 })
 v644:AddToggle({
-    Name = "自动买票",
+    Name = "自動買票",
     Default = false,
     Callback = function(val) _G.AutoBuyChip = val end
 })
 v644:AddToggle({
-    Name = "自动开始袭击",
+    Name = "自動開始襲擊",
     Default = false,
     Callback = function(val) _G.Settings.Raid["Auto Raid"] = val end
 })
 v644:AddToggle({
-    ["Name"] = "自动前往下一个岛屿",
-    ["Description"] = "",
-    ["Default"] = false,
-    ["Callback"] = function(p1320)
+    Name = "自動前往下一個島嶼",
+    Default = false,
+    Callback = function(p1320)
         _G.Dungeon = p1320
         _G.CurrentRaidIsland = 0
     end
 })
 v644:AddToggle({
-    ["Name"] = "自动拿出果实",
-    ["Description"] = "",
-    ["Default"] = false,
-    ["Callback"] = function(p1347)
+    Name = "自動拿出果實",
+    Default = false,
+    Callback = function(p1347)
         _G.Autofruit = p1347
     end
 })
 v644:AddToggle({
-    ["Name"] = "自动V4",
-    ["Description"] = "",
-    ["Default"] = true,
-    ["Callback"] = function(p1348)
-        _G.ToggleStates["自动V4"] = p1348
-        if autoV4Task then task.cancel(autoV4Task) autoV4Task = nil end
-        if p1348 then startAutoV4Loop() end
-    end
-})
-v644:AddToggle({
-    ["Name"] = "自动V3",
-    ["Description"] = "",
-    ["Default"] = false,
-    ["Callback"] = function(p1349)
-        _G.ToggleStates["自动V3"] = p1349
-        if autoV3Task then task.cancel(autoV3Task) autoV3Task = nil end
-        if p1349 then
-            autoV3Task = task.spawn(function()
-                while _G.ToggleStates["自动V3"] do
-                    callRaceV3Remote()
-                    task.wait(1)
-                end
-                autoV3Task = nil
-            end)
-        end
-    end
-})
-v644:AddToggle({
-    ["Name"] = "快速攻击",
-    ["Description"] = "",
-    ["Default"] = true,
-    ["Callback"] = function(p1350)
+    Name = "快速攻擊",
+    Default = true,
+    Callback = function(p1350)
         if _ENV.rz_FastAttack then
             _ENV.rz_FastAttack.IsRunning = p1350
             _G.FastAttack = p1350
@@ -224,10 +200,9 @@ v644:AddToggle({
     end
 })
 v644:AddToggle({
-    ["Name"] = "自动武装色",
-    ["Description"] = "",
-    ["Default"] = true,
-    ["Callback"] = function(state)
+    Name = "自動武裝色",
+    Default = true,
+    Callback = function(state)
         AutoHakiEnabled = state
         if state then
             startAutoHakiLoop()
@@ -239,48 +214,6 @@ v644:AddToggle({
         end
     end
 })
-
-local autoV4Task = nil
-local function callAwakeningRemote()
-    local character = LocalPlayer.Character
-    if not character then return end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return end
-    local Backpack = LocalPlayer:FindFirstChild("Backpack")
-    if not Backpack then return end
-    local Awakening = Backpack:FindFirstChild("Awakening")
-    if not Awakening then return end
-    local RemoteFunc = Awakening:FindFirstChild("RemoteFunction")
-    if not RemoteFunc then return end
-    pcall(function()
-        RemoteFunc:InvokeServer(true)
-    end)
-end
-local function startAutoV4Loop()
-    if autoV4Task then task.cancel(autoV4Task) end
-    autoV4Task = task.spawn(function()
-        while _G.ToggleStates["自动V4"] do
-            pcall(callAwakeningRemote)
-            task.wait(1)
-        end
-        autoV4Task = nil
-    end)
-end
-task.spawn(function()
-    while not LocalPlayer.Character do task.wait(0.5) end
-    if _G.ToggleStates["自动V4"] then startAutoV4Loop() end
-end)
-
-local autoV3Task = nil
-local function callRaceV3Remote()
-    local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
-    if not Remotes then return end
-    local CommE = Remotes:FindFirstChild("CommE")
-    if not CommE then return end
-    pcall(function()
-        CommE:FireServer("ActivateAbility")
-    end)
-end
 
 local function startAutoHakiLoop()
     if autoHakiTask then
@@ -304,18 +237,6 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     task.wait(2)
     if AutoHakiEnabled then
         startAutoHakiLoop()
-    end
-    if _G.ToggleStates["自动V4"] then
-        startAutoV4Loop()
-    end
-    if _G.ToggleStates["自动V3"] and not autoV3Task then
-        autoV3Task = task.spawn(function()
-            while _G.ToggleStates["自动V3"] do
-                callRaceV3Remote()
-                task.wait(1)
-            end
-            autoV3Task = nil
-        end)
     end
 end)
 
@@ -498,17 +419,6 @@ spawn(function()
 end)
 
 spawn(function()
-    while task.wait() do
-        if _G.Dungeon then
-            vu1346()
-            if vu1336() then
-                topos(vu1336().CFrame * CFrame.new(0, 300, 0))
-            end
-        end
-    end
-end)
-
-spawn(function()
     local FruitList = {
         "Rocket-Rocket", "Spin-Spin", "Chop-Chop", "Spring-Spring", "Bomb-Bomb",
         "Smoke-Smoke", "Spike-Spike", "Flame-Flame", "Falcon-Falcon", "Ice-Ice",
@@ -522,12 +432,10 @@ spawn(function()
                 currentFruitIndex = 1
                 return
             end
-
             local currentFruit = FruitList[currentFruitIndex]
             pcall(function()
                 CommF_Remote:InvokeServer("LoadFruit", currentFruit)
             end)
-
             currentFruitIndex = currentFruitIndex + 1
             if currentFruitIndex > #FruitList then
                 currentFruitIndex = 1
@@ -535,3 +443,5 @@ spawn(function()
         end)
     end
 end)
+
+print("腳本載入完成！已移除自動V3與自動V4功能。小圖標可拖動，點擊開啟主UI～")
