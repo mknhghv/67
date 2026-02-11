@@ -109,7 +109,7 @@ end
 
 local vu616 = loadstring(game:HttpGet("https://raw.githubusercontent.com/farehamhz/RedzLib/main/RedzLib"))():MakeWindow({
     Title = "大佛打本👿",
-    SubTitle = "by kismile秦始皇代用",
+    SubTitle = "by kismile",
     SaveFolder = ""
 })
 local v617 = Instance.new("ScreenGui", game.CoreGui)
