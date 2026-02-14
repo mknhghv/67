@@ -24,19 +24,14 @@ local SilentAimPlayersEnabled = false
 local UserWantsplayerAim = false
 local PredictionEnabled = false
 local HighlightEnabled = false 
-local AutoKen = false
 local ZSkillorM1 = false
-local autoKenRunning = false
+local autoKenRunning = false  -- 已禁用
 
 local renderConnection = nil
 local currentTool = nil
 local playersaimbot = nil
 local PlayersPosition = nil
-local currentHighlight = nil
 local Selectedplayer = nil
-local MiniPlayerState = nil
-local MiniPlayerCreated = false
-local MiniPlayerGui = nil
 
 local characterConnections = {}
 local Skills = {"X"}
@@ -115,26 +110,34 @@ local function watchDamageCounter()
 
 	task.spawn(function()
 		while true do
-			local gui = player:FindFirstChild("PlayerGui")
-			if not gui then
+			local success, gui = pcall(function()
+				return player:WaitForChild("PlayerGui", 5)
+			end)
+			if not success or not gui then
 				task.wait(1)
 				continue
 			end
 
-			gui = gui:FindFirstChild("Main")
-			if not gui then
+			local success2, mainGui = pcall(function()
+				return gui:WaitForChild("Main", 5)
+			end)
+			if not success2 or not mainGui then
 				task.wait(1)
 				continue
 			end
 
-			local dmgCounter = gui:FindFirstChild("DmgCounter")
-			if not dmgCounter then
+			local success3, dmgCounter = pcall(function()
+				return mainGui:WaitForChild("DmgCounter", 5)
+			end)
+			if not success3 or not dmgCounter then
 				task.wait(1)
 				continue
 			end
 
-			local dmgTextLabel = dmgCounter:FindFirstChild("Text")
-			if not dmgTextLabel then
+			local success4, dmgTextLabel = pcall(function()
+				return dmgCounter:WaitForChild("Text", 5)
+			end)
+			if not success4 or not dmgTextLabel then
 				task.wait(1)
 				continue
 			end
@@ -213,24 +216,16 @@ local function getPredictedPosition(hrp)
 	return hrp.Position + (hrp.Velocity * PredictionAmount)
 end
 
+-- 安全版：不掃 GUI，直接用 Team 判斷（Pirates 內部全敵，Marines 內部不瞄）
 local function isAllyWithMe(targetplayer)
-	local myGui = player:FindFirstChild("PlayerGui")
-	if not myGui then return false end
-
-	local scrolling = myGui:FindFirstChild("Main")
-		and myGui.Main:FindFirstChild("Allies")
-		and myGui.Main.Allies:FindFirstChild("Container")
-		and myGui.Main.Allies.Container.Allies:FindFirstChild("ScrollingFrame")
-
-	if scrolling then
-		for _, frame in pairs(scrolling:GetDescendants()) do
-			if frame:IsA("ImageButton") and frame.Name == targetplayer.Name then
-				return true
-			end
-		end
-	end
-
-	return false
+    local myTeam = player.Team
+    local targetTeam = targetplayer.Team
+    if myTeam and targetTeam then
+        if myTeam.Name == targetTeam.Name then
+            return myTeam.Name == "Marines"  -- Marines 內部不瞄，Pirates 內部瞄
+        end
+    end
+    return false
 end
 
 local function isEnemy(targetplayer)
@@ -249,10 +244,7 @@ local function isEnemy(targetplayer)
 		end
 
 		if myTeam.Name == "Pirates" and targetTeam.Name == "Pirates" then
-			if isAllyWithMe(targetplayer) then
-				return false
-			end
-			return true
+			return not isAllyWithMe(targetplayer)
 		end
 
 		if myTeam.Name == "Marines" and targetTeam.Name == "Marines" then
@@ -286,16 +278,28 @@ end
 
 local function isSkillReadyForTool(toolName)
     if not toolName then return false end
-    local playerGui = player:FindFirstChild("PlayerGui")
-    if not playerGui then return false end
-    local skillsFolder = playerGui:FindFirstChild("Main") and playerGui.Main:FindFirstChild("Skills")
-    if not skillsFolder then return false end
-    local toolFrame = skillsFolder:FindFirstChild(toolName)
-    if not toolFrame then return false end
+    local success, playerGui = pcall(function()
+        return player:WaitForChild("PlayerGui", 3)
+    end)
+    if not success or not playerGui then return false end
+    local success2, mainGui = pcall(function()
+        return playerGui:WaitForChild("Main", 3)
+    end)
+    if not success2 or not mainGui then return false end
+    local success3, skillsFolder = pcall(function()
+        return mainGui:WaitForChild("Skills", 3)
+    end)
+    if not success3 or not skillsFolder then return false end
+    local success4, toolFrame = pcall(function()
+        return skillsFolder:WaitForChild(toolName, 3)
+    end)
+    if not success4 or not toolFrame then return false end
 
     for _, skillKey in ipairs({"Z","X","C","V"}) do
-        local skill = toolFrame:FindFirstChild(skillKey)
-        if skill and skill:FindFirstChild("Cooldown") and skill.Cooldown:IsA("Frame") then
+        local success5, skill = pcall(function()
+            return toolFrame:WaitForChild(skillKey, 1)
+        end)
+        if success5 and skill and skill:FindFirstChild("Cooldown") and skill.Cooldown:IsA("Frame") then
             local cooldownSize = skill.Cooldown.Size.X.Scale
             if cooldownSize == 1.0 then
                 return true
@@ -445,43 +449,6 @@ if not isNotValidCondition() then
     end
 end
 
-local HasTag = function(tagName)
-  local char = player.Character
-  if (not char) then return false; end
-  return Services.CollectionService:HasTag(char, tagName);
-end
-
-local function startAutoKenLoop()
-    if autoKenRunning then return end
-    autoKenRunning = true
-
-    task.spawn(function()
-        while AutoKen do
-            task.wait(0.1)
-
-            if HasTag("Ken") then
-                local playerGui = player:FindFirstChild("PlayerGui")
-                if playerGui then
-                    local kenButton = playerGui:FindFirstChild("MobileContextButtons")
-                    and playerGui.MobileContextButtons.ContextButtonFrame:FindFirstChild("BoundActionKen")
-
-                    if kenButton and kenButton:GetAttribute("Selected") ~= true then
-                        kenButton:SetAttribute("Selected", true)
-                    end
-                end
-
-                local observationManager = getrenv()._G.OM
-                if observationManager and not observationManager.active then
-                    observationManager.radius = 0
-                    observationManager:setActive(true)
-                    commE:FireServer("Ken", true)
-                end
-            end
-        end
-        autoKenRunning = false
-    end)
-end
-
 local function onCharacterAdded(char)
     clearConnections()
 
@@ -506,14 +473,6 @@ end
 
 player.CharacterAdded:Connect(onCharacterAdded)
 if player.Character then onCharacterAdded(player.Character) end
-
-function SilentAimModule:SetAutoKen(state)
-    AutoKen = state
-
-    if state then
-        startAutoKenLoop()
-    end
-end
 
 function SilentAimModule:SetZSkillorM1(state)
     ZSkillorM1 = state
@@ -623,7 +582,7 @@ StatusLabel.Size = UDim2.new(0.8, 0, 0, 30)
 StatusLabel.Position = UDim2.new(0.1, 0, 0.7, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = "Ready to aim"
-StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.TextSize = 14
 StatusLabel.Parent = Frame
@@ -636,7 +595,7 @@ ToggleButton.MouseButton1Click:Connect(function()
     if aimbotEnabled then
         ToggleButton.Text = "Aimbot: ON"
         ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-        StatusLabel.Text = "Aimbot 开启"
+        StatusLabel.Text = "Aimbot開啟"
         
         if Aim and typeof(Aim.SetPlayerSilentAim) == "function" then
             pcall(function() 
@@ -646,7 +605,7 @@ ToggleButton.MouseButton1Click:Connect(function()
     else
         ToggleButton.Text = "Aimbot: OFF"
         ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        StatusLabel.Text = "Aimbot 关闭"
+        StatusLabel.Text = "Aimbot關閉"
         
         if Aim and typeof(Aim.SetPlayerSilentAim) == "function" then
             pcall(function() 
@@ -702,6 +661,6 @@ end)
 
 StarterGui:SetCore("SendNotification", {
     Title = "Aimbot",
-    Text = "by 老六",
+    Text = "載入成功！自瞄正常",
     Duration = 5,
 })
