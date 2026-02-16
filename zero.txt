@@ -269,7 +269,7 @@ attackTab:Toggle("開關", "FastAttackToggle", _G.FastAttack, function(state)
 	end
 end)
 
-attackTab:Textbox("範圍", "AttackRange", "10000", function(text)
+attackTab:Textbox("範圍", "AttackRange", "3000", function(text)
 	local num = tonumber(text) or 10000
 	num = math.floor(math.clamp(num, 1, 10000))
 	if _ENV.rz_FastAttack then
