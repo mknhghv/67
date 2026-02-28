@@ -1,0 +1,208 @@
+-- Blox Fruits 超速船 GUI 腳本 (可調整速度)
+-- 將此腳本貼到你的 Roblox Executor 執行
+-- 功能：UI 介面、拖拽、可調整 MaxSpeed & Torque、僅加速你的船、防無限速度、預設按鈕、RightShift 快速切換
+-- 注意：使用有封號風險，自負責任！Update 支援至 2026
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- 變數
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FastBoatGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 320, 0, 280)
+Frame.Position = UDim2.new(0.5, -160, 0.5, -140)
+Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true  -- 內建拖拽
+Frame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -40, 0, 35)
+Title.Position = UDim2.new(0, 10, 0, 5)
+Title.BackgroundTransparency = 1
+Title.Text = "🚀 Blox Fruits 超速船"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextScaled = true
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = Frame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 15)
+CloseCorner.Parent = CloseBtn
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 45)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 45)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+ToggleBtn.Text = "關閉 (OFF)"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextScaled = true
+ToggleBtn.Font = Enum.Font.GothamSemibold
+ToggleBtn.Parent = Frame
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = ToggleBtn
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(1, -20, 0, 25)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 100)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "船速 (MaxSpeed):"
+SpeedLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+SpeedLabel.TextScaled = true
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = Frame
+
+local SpeedBox = Instance.new("TextBox")
+SpeedBox.Size = UDim2.new(1, -20, 0, 35)
+SpeedBox.Position = UDim2.new(0, 10, 0, 125)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+SpeedBox.Text = "5000"
+SpeedBox.PlaceholderText = "輸入速度 (e.g. 5000 或 ∞)"
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.TextScaled = true
+SpeedBox.Font = Enum.Font.Gotham
+SpeedBox.Parent = Frame
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 8)
+BoxCorner.Parent = SpeedBox
+
+-- 預設按鈕
+local presets = {1000, 5000, 10000, math.huge}
+local presetTexts = {"1000", "5000", "10000", "∞"}
+local function createPreset(x, text, value)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 70, 0, 35)
+    btn.Position = UDim2.new(0, 10 + x * 78, 0, 170)
+    btn.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = Frame
+    local pc = Instance.new("UICorner")
+    pc.CornerRadius = UDim.new(0, 8)
+    pc.Parent = btn
+    btn.MouseButton1Click:Connect(function()
+        SpeedBox.Text = text
+        speed = value  -- 全域 speed
+    end)
+end
+
+for i, v in ipairs(presets) do
+    createPreset(i-1, presetTexts[i], v)
+end
+
+-- 狀態標籤
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+StatusLabel.Position = UDim2.new(0, 10, 0, 220)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "狀態: 就緒"
+StatusLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+StatusLabel.TextScaled = true
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = Frame
+
+-- 邏輯變數
+local enabled = false
+local speed = 5000
+local torqueMultiplier = 10  -- 扭力倍數，轉向更靈活
+local connection
+
+-- 更新速度函數
+local function updateSpeed()
+    pcall(function()
+        local char = player.Character
+        if not char then return end
+        local found = false
+        for _, boat in pairs(workspace.Boats:GetChildren()) do
+            local seat = boat:FindFirstChild("VehicleSeat")
+            if seat and seat.Occupant and seat.Occupant.Parent == char then
+                seat.MaxSpeed = speed
+                seat.Torque = (type(speed) == "number" and speed * torqueMultiplier) or math.huge
+                found = true
+            end
+        end
+        StatusLabel.Text = found and "狀態: 加速中！" or "狀態: 未偵測船隻"
+        StatusLabel.TextColor3 = found and Color3.fromRGB(150, 255, 150) or Color3.fromRGB(255, 200, 100)
+    end)
+end
+
+-- Toggle 功能
+local function toggle()
+    enabled = not enabled
+    if enabled then
+        ToggleBtn.Text = "開啟 (ON)"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(85, 255, 85)
+        connection = RunService.Heartbeat:Connect(updateSpeed)
+    else
+        ToggleBtn.Text = "關閉 (OFF)"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end
+
+ToggleBtn.MouseButton1Click:Connect(toggle)
+
+-- RightShift 快速切換
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        toggle()
+    end
+end)
+
+-- 速度輸入
+SpeedBox.FocusLost:Connect(function(enterPressed)
+    local input = SpeedBox.Text:lower():gsub("%s+", "")  -- 去除空格
+    if input == "inf" or input == "∞" or input == "infinite" then
+        speed = math.huge
+        SpeedBox.Text = "∞"
+    else
+        local num = tonumber(input)
+        if num and num > 0 then
+            speed = num
+            SpeedBox.Text = tostring(num)
+        else
+            SpeedBox.Text = (speed == math.huge and "∞") or tostring(speed)
+        end
+    end
+end)
+
+-- 關閉
+CloseBtn.MouseButton1Click:Connect(function()
+    if connection then connection:Disconnect() end
+    ScreenGui:Destroy()
+end)
+
+print("🚀 Blox Fruits 超速船 GUI 已載入！按 RightShift 切換，拖拽 UI 使用～")
