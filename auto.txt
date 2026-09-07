@@ -1,0 +1,1246 @@
+local WindUI = loadstring(request({
+    Url = "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"
+}).Body)()
+
+_G.AutoBird = false
+_G.AutoSummonBird = false
+_G.FarmLocation = "左邊"
+_G.BringMob = false
+_G.G_BringMobs = false -- 【聚怪邏輯控制變數】
+_G.WeaponType = "Melee"
+_G.AutoEquipWeapon = false
+_G.OptimizeFPS = false
+_G.AutoHaki = true
+_G.AutoV3 = false
+_G.AutoV4 = false
+_G.FastAttack = true -- 預設直接開啟快速攻擊
+
+-- 【自動地下城風格 攻擊核心 Config】
+local Config = {
+    FastAttackMob = true,
+    FastAttackPlayer = false,
+    FastAttackDelay = 0,        -- 攻速延遲 (0秒極速)
+    
+    RemoveAnimationFast = true, -- 核心加速：移除攻擊動畫鎖
+    DoubleAttack = true,        -- 核心雙倍：每輪攻擊打 2 下
+    
+    BypassFastAttack = true,
+    AttackRange = 500,          -- 擴大攻擊範圍至 500
+    HealthMobThreshold = 0      -- 怪物血量門檻
+}
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local VirtualUser = game:GetService("VirtualUser")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local player = LocalPlayer
+local ZERO = Vector3.zero
+
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+
+local ActiveTween = nil
+local ActiveTweenTarget = nil
+local NoclipConnection = nil
+local LastNoclipApply = 0
+
+local function ApplyNoclip(character)
+    if not character then return end
+    for _, v in ipairs(character:GetChildren()) do
+        if v:IsA("BasePart") and v.CanCollide then
+            v.CanCollide = false
+        end
+    end
+end
+
+local function forceNoclip()
+    local now = tick()
+    if now - LastNoclipApply < 0.2 then
+        return
+    end
+    LastNoclipApply = now
+    ApplyNoclip(LocalPlayer.Character)
+end
+
+local function EnsureNoclipLoop()
+    if NoclipConnection then return end
+    NoclipConnection = RunService.Heartbeat:Connect(function()
+        if not ActiveTween or ActiveTween.PlaybackState ~= Enum.PlaybackState.Playing then
+            if NoclipConnection then
+                NoclipConnection:Disconnect()
+                NoclipConnection = nil
+            end
+            return
+        end
+        ApplyNoclip(LocalPlayer.Character)
+    end)
+end
+
+local function topos(Pos)
+    if not LocalPlayer or not LocalPlayer.Character then return end
+
+    local HRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    if not HRP or not Humanoid then return end
+
+    if ActiveTween
+    and ActiveTween.PlaybackState == Enum.PlaybackState.Playing
+    and ActiveTweenTarget
+    and (ActiveTweenTarget.Position - Pos.Position).Magnitude <= 4 then
+        return
+    end
+
+    HRP.AssemblyLinearVelocity = ZERO
+    HRP.AssemblyAngularVelocity = ZERO
+
+    local Distance = (Pos.Position - HRP.Position).Magnitude
+    if Distance <= 5 then
+        if ActiveTween then
+            ActiveTween:Cancel()
+            ActiveTween = nil
+            ActiveTweenTarget = nil
+        end
+        HRP.CFrame = Pos
+        return
+    end
+
+    local Speed = 350
+    if Distance < 150 then
+        Speed = 600
+    elseif Distance < 250 then
+        Speed = 450
+    elseif Distance < 500 then
+        Speed = 400
+    elseif Distance < 750 then
+        Speed = 300
+    end
+
+    if ActiveTween then
+        ActiveTween:Cancel()
+        ActiveTween = nil
+    end
+
+    ActiveTweenTarget = Pos
+    ActiveTween = TweenService:Create(
+        HRP,
+        TweenInfo.new(Distance / Speed, Enum.EasingStyle.Linear),
+        {CFrame = Pos}
+    )
+
+    EnsureNoclipLoop()
+    ActiveTween:Play()
+end
+
+local function StopTween()
+    if ActiveTween then
+        ActiveTween:Cancel()
+        ActiveTween = nil
+    end
+    ActiveTweenTarget = nil
+
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local bodyClip = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip")
+        if bodyClip then bodyClip:Destroy() end
+    end
+end
+
+-- ====================================================================
+-- 【自動地下城】網路 Remote 模組預載入
+-- ====================================================================
+local NetModules       = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+local RegisterHit      = NetModules:WaitForChild("RE/RegisterHit")
+local RegisterAttack   = NetModules:WaitForChild("RE/RegisterAttack")
+local CancelEquipAnim  = NetModules:FindFirstChild("RE/CancelEquipAnim") or NetModules:FindFirstChild("RE/RemoveAnimation")
+
+local NetModuleRequire = nil
+pcall(function()
+    NetModuleRequire = require(ReplicatedStorage.Modules.Net)
+end)
+
+local function isShadow(name)
+    local lower = string.lower(name)
+    return string.find(lower, "shadow") ~= nil
+        or string.find(name, "'s Shadow") ~= nil
+        or string.find(name, "\u{2019}s Shadow") ~= nil
+end
+
+local remoteId = nil
+local remoteEvent = nil
+local Folders = {
+    ReplicatedStorage.Util,
+    ReplicatedStorage.Common,
+    ReplicatedStorage.Remotes,
+    ReplicatedStorage.Assets,
+    ReplicatedStorage.FX,
+}
+for _, Remotes in ipairs(Folders) do
+    pcall(function()
+        for _, remote in ipairs(Remotes:GetChildren()) do
+            if remote:IsA('RemoteEvent') and remote:GetAttribute('Id') then
+                remoteId = remote:GetAttribute('Id')
+                remoteEvent = remote
+            end
+        end
+        Remotes.ChildAdded:Connect(function(add)
+            if add:IsA('RemoteEvent') and add:GetAttribute('Id') then
+                remoteId = add:GetAttribute('Id')
+                remoteEvent = add
+            end
+        end)
+    end)
+end
+
+local lastAttackTime = 0
+local function generateRegisterHitToken()
+    return tostring(player.UserId):sub(2, 4) .. tostring(coroutine.running()):sub(11, 15)
+end
+
+local MobDamageTracker = {}
+
+-- ====================================================================
+-- 【高階快速攻擊主邏輯（全武器/空手開放版）】
+-- ====================================================================
+task.spawn(function()
+    while true do
+        if Config.FastAttackDelay > 0 then
+            task.wait(Config.FastAttackDelay)
+        else
+            local delta = tick() - lastAttackTime
+            if delta < 0.015 then
+                task.wait(0.015 - delta)
+            else
+                task.wait()
+            end
+        end
+
+        if not _G.FastAttack then continue end
+
+        local Character = player.Character
+        local hrp = Character and Character:FindFirstChild('HumanoidRootPart')
+        if not Character or not hrp then continue end
+
+        local hum = Character:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then continue end
+
+        local attackRange = Config.AttackRange or 500
+
+        local BladeHits = {}
+        local MobFolders = { workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters") }
+        for _, Mobs in ipairs(MobFolders) do
+            if not Mobs then continue end
+            if Mobs.Name == "Enemies" and not Config.FastAttackMob then continue end
+            if Mobs.Name == "Characters" and not Config.FastAttackPlayer then continue end
+            for _, Mob in ipairs(Mobs:GetChildren()) do
+                if Mob == Character or not Mob:IsA("Model") or isShadow(Mob.Name) or Mob.Name == "Blank Buddy" then continue end
+                local mobHrp = Mob:FindFirstChild('HumanoidRootPart')
+                local mobHum = Mob:FindFirstChild('Humanoid')
+                if mobHrp and mobHum and mobHum.Health > Config.HealthMobThreshold then
+                    if (mobHrp.Position - hrp.Position).Magnitude <= attackRange then
+                        BladeHits[#BladeHits + 1] = {Mob, mobHrp}
+                    end
+                end
+            end
+        end
+
+        if #BladeHits > 0 then
+            local targetMob = BladeHits[1][1]
+            local _Head = targetMob:FindFirstChild('Head') or BladeHits[1][2]
+            if _Head then
+                lastAttackTime = tick()
+                local sessionToken = generateRegisterHitToken()
+
+                if MobDamageTracker[targetMob] then
+                    MobDamageTracker[targetMob].lastHit = tick()
+                end
+
+                -- 直接觸發打擊封包
+                RegisterAttack:FireServer(0.01)
+                RegisterHit:FireServer(_Head, BladeHits, {}, sessionToken)
+
+                if Config.RemoveAnimationFast and CancelEquipAnim then
+                    CancelEquipAnim:FireServer()
+                end
+
+                if Config.DoubleAttack then
+                    RegisterAttack:FireServer(0.01)
+                    RegisterHit:FireServer(_Head, BladeHits, {}, sessionToken)
+                    if Config.RemoveAnimationFast and CancelEquipAnim then
+                        CancelEquipAnim:FireServer()
+                    end
+                end
+
+                if Config.BypassFastAttack and remoteEvent then
+                    task.spawn(function()
+                        pcall(function()
+                            if NetModuleRequire then
+                                NetModuleRequire:RemoteEvent('RegisterHit', true)
+                            end
+                            remoteEvent:FireServer(
+                                string.gsub('RE/RegisterHit', '.', function(p)
+                                    return string.char(bit32.bxor(string.byte(p), math.floor(workspace:GetServerTimeNow() / 10 % 10) + 1))
+                                end),
+                                bit32.bxor(remoteId + 909090, ReplicatedStorage.Modules.Net.seed:InvokeServer() * 2),
+                                _Head, BladeHits
+                            )
+                        end)
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+--====================================================
+-- 自動武裝色及種族技能
+--====================================================
+local function startAutoHakiLoop()
+    task.spawn(function()
+        local remotes = ReplicatedStorage:WaitForChild("Remotes", 5)
+        local commF = remotes and remotes:WaitForChild("CommF_", 5)
+        
+        while true do
+            task.wait(2) 
+            if _G.AutoHaki and commF then
+                local Character = LocalPlayer.Character
+                if Character and not Character:FindFirstChild("HasBuso") then
+                    pcall(function()
+                        commF:InvokeServer("Buso")
+                    end)
+                end
+            end
+        end
+    end)
+end
+
+local function handleAbility(abilityType)
+    task.spawn(function()
+        while true do
+            if _G["Auto" .. abilityType] then
+                if abilityType == "V4" then
+                    local Awakening = nil
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Awakening") then
+                        Awakening = LocalPlayer.Character:FindFirstChild("Awakening")
+                    elseif LocalPlayer:FindFirstChild("Backpack") and LocalPlayer.Backpack:FindFirstChild("Awakening") then
+                        Awakening = LocalPlayer.Backpack:FindFirstChild("Awakening")
+                    end
+                    
+                    if Awakening and Awakening:FindFirstChild("RemoteFunction") then
+                        pcall(function() Awakening.RemoteFunction:InvokeServer(true) end)
+                    end
+                elseif abilityType == "V3" then
+                    local CommE = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommE")
+                    if CommE then
+                        pcall(function() CommE:FireServer("ActivateAbility") end)
+                    end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+startAutoHakiLoop()
+handleAbility("V3")
+handleAbility("V4")
+
+local BringMob = false
+local BringCount = 0
+local MonFarm
+local FarmPos 
+
+local FarmConnection = nil
+local rightSpawnCFrame = CFrame.new(-16538.543, 74.8822479, -353.176544, 0.942829669, 2.85748261e-08, -0.333274961, -1.46747183e-08, 1, 4.42249402e-08, 0.333274961, -3.68058721e-08, 0.942829669)
+local leftSpawnCFrame = CFrame.new(-16522.92, 159.25, 1329.59, 0.0498976, 4.11380086e-08, -0.998754323, 4.56860789e-08, 1, 4.34717862e-08, 0.998754323, -4.77983093e-08, 0.0498976)
+
+local hasReachedSpawn = false 
+local FarmWaitIndex = 1
+local FarmSpotDwellUntil = 0
+local FarmSpotDwellTime = 5
+
+local LeftMobs = {
+    ["Isle Champion"] = true,
+    ["Serpent Hunter"] = true,
+    ["Skull Slayer"] = true,
+    ["Sun-kissed Warrior"] = true
+}
+
+local RightMobs = {
+    ["Island Boy"] = true,
+    ["Isle Outlaw"] = true
+}
+
+local function IsFarmTargetMob(name)
+    if _G.FarmLocation == "左邊" or _G.FarmLocation == "左边" then
+        return LeftMobs[name] == true
+    elseif _G.FarmLocation == "右邊" or _G.FarmLocation == "右边" then
+        return RightMobs[name] == true
+    elseif _G.FarmLocation == "左右都打" then
+        return LeftMobs[name] == true or RightMobs[name] == true
+    end
+    return false
+end
+
+local LeftOnlyPoints = { leftSpawnCFrame }
+local RightOnlyPoints = { rightSpawnCFrame }
+local BothPoints = { leftSpawnCFrame, rightSpawnCFrame }
+
+local function GetSpawnPoints()
+    if _G.FarmLocation == "右邊" or _G.FarmLocation == "右边" then
+        return RightOnlyPoints
+    elseif _G.FarmLocation == "左右都打" then
+        return BothPoints
+    end
+    return LeftOnlyPoints
+end
+
+local function ResetFarmWaitIndex()
+    FarmWaitIndex = 1
+    FarmSpotDwellUntil = 0
+end
+
+local function GetCurrentWaitPos()
+    local points = GetSpawnPoints()
+    if #points == 0 then return leftSpawnCFrame end
+    if FarmWaitIndex < 1 or FarmWaitIndex > #points then
+        FarmWaitIndex = 1
+    end
+    return points[FarmWaitIndex]
+end
+
+local function AdvanceWaitPos(hrp)
+    local points = GetSpawnPoints()
+    if #points <= 1 then
+        return GetCurrentWaitPos()
+    end
+
+    local current = GetCurrentWaitPos()
+    if not current then return leftSpawnCFrame end
+
+    if hrp and (hrp.Position - current.Position).Magnitude <= 15 then
+        local now = tick()
+        if FarmSpotDwellUntil <= 0 then
+            FarmSpotDwellUntil = now + FarmSpotDwellTime
+        elseif now >= FarmSpotDwellUntil then
+            FarmWaitIndex = FarmWaitIndex + 1
+            if FarmWaitIndex > #points then
+                FarmWaitIndex = 1
+            end
+            FarmSpotDwellUntil = 0
+        end
+    else
+        if FarmSpotDwellUntil > 0 and hrp and (hrp.Position - current.Position).Magnitude > 80 then
+            FarmSpotDwellUntil = 0
+        end
+    end
+
+    return GetCurrentWaitPos()
+end
+
+local CachedFarmTarget = nil
+local LastKillTime = 0
+
+local function IsAliveMob(mob)
+    if not mob or not mob.Parent then return false end
+    local root = mob:FindFirstChild("HumanoidRootPart")
+    local hum = mob:FindFirstChild("Humanoid")
+    return root ~= nil and hum ~= nil and hum.Health > 0 and mob.PrimaryPart ~= nil
+end
+
+local function GetFarmTarget()
+    local now = tick()
+    
+    if CachedFarmTarget then
+        if IsAliveMob(CachedFarmTarget) then
+            return CachedFarmTarget
+        else
+            CachedFarmTarget = nil
+            LastKillTime = now
+        end
+    end
+
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    local myRoot = character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local myPos = myRoot.Position
+
+    local enemiesFolder = workspace:FindFirstChild("Enemies")
+    if not enemiesFolder then return nil end
+
+    local nearestMob = nil
+    local minDistance = math.huge
+    local children = enemiesFolder:GetChildren()
+
+    for i = 1, #children do
+        local mob = children[i]
+        local name = mob.Name
+        if name == "Tyrant of the Skies" and IsAliveMob(mob) then
+            CachedFarmTarget = mob
+            return mob
+        end
+
+        if IsFarmTargetMob(name) and IsAliveMob(mob) then
+            local root = mob:FindFirstChild("HumanoidRootPart")
+            local dist = (root.Position - myPos).Magnitude
+            if _G.FarmLocation == "左右都打" then
+                if dist < minDistance then
+                    minDistance = dist
+                    nearestMob = mob
+                end
+            else
+                if dist < minDistance and dist < 3000 then
+                    minDistance = dist
+                    nearestMob = mob
+                end
+            end
+        end
+    end
+
+    CachedFarmTarget = nearestMob
+    return nearestMob
+end
+
+--====================================================
+-- 聚怪邏輯 (RunService + BodyVelocity)
+--====================================================
+local bringMobsConnection = nil
+
+local function StartBringMobs()
+    if bringMobsConnection then return end
+    
+    bringMobsConnection = RunService.Heartbeat:Connect(function()
+        if not _G.G_BringMobs then return end
+        
+        pcall(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            
+            local hum = char:FindFirstChild("Humanoid")
+            if not hum or hum.Health <= 0 then return end
+            
+            if sethiddenproperty then
+                sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+            end
+            
+            local targetPos = hrp.Position
+            local enemies = Workspace:FindFirstChild("Enemies")
+            if not enemies then return end
+            
+            local enemyList = enemies:GetChildren()
+            
+            for i = 1, #enemyList do
+                local enemy = enemyList[i]
+                if enemy:IsA("Model") then
+                    local enemyHum = enemy:FindFirstChild("Humanoid")
+                    local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
+                    
+                    if enemyHum and enemyRoot and enemyHum.Health > 0 then
+                        local distance = (enemyRoot.Position - targetPos).Magnitude
+                        
+                        if distance <= 3000 then
+                            local bv = enemyRoot:FindFirstChild("BodyVelocity")
+                            if not bv then
+                                bv = Instance.new("BodyVelocity")
+                                bv.Name = "BodyVelocity"
+                                bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                                bv.Velocity = Vector3.zero
+                                bv.Parent = enemyRoot
+                            end
+                            
+                            if distance > 18 then
+                                local isOwner = false
+                                if isnetworkowner then
+                                    isOwner = isnetworkowner(enemyRoot)
+                                else
+                                    isOwner = enemyRoot.ReceiveAge == 0 and not enemyRoot.Anchored
+                                end
+                                
+                                if isOwner then
+                                    enemyRoot.CFrame = CFrame.new(targetPos.X, targetPos.Y - 18, targetPos.Z)
+                                end
+                            end
+                            
+                            enemyRoot.CanCollide = false
+                            enemyHum.WalkSpeed = 0
+                            enemyHum.JumpPower = 0
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+local function StopBringMobs()
+    _G.G_BringMobs = false
+    
+    if bringMobsConnection then
+        bringMobsConnection:Disconnect()
+        bringMobsConnection = nil
+    end
+    
+    pcall(function()
+        local enemies = Workspace:FindFirstChild("Enemies")
+        if enemies me then
+            for _, enemy in ipairs(enemies:GetChildren()) do
+                if enemy:IsA("Model") then
+                    local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
+                    if enemyRoot then
+                        local bv = enemyRoot:FindFirstChild("BodyVelocity")
+                        if bv then
+                            bv:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+--====================================================
+-- 鷹眼檢測與 Boss 召喚邏輯
+--====================================================
+local CachedIslandModel = nil
+local CachedArena = nil
+local CachedEyes = nil
+local NextEyeCacheRefresh = 0
+local NextTreeCacheRefresh = 0
+local CachedTreeList = nil
+local NextEagleEyeCheck = 0
+local CachedEagleEyeResult = false
+
+local function GetIslandModel()
+    if CachedIslandModel and CachedIslandModel.Parent then return CachedIslandModel end
+    local map = workspace:FindFirstChild("Map")
+    local tiki = map and map:FindFirstChild("TikiOutpost")
+    CachedIslandModel = tiki and tiki:FindFirstChild("IslandModel") or nil
+    return CachedIslandModel
+end
+
+local function RefreshEyeCache(islandModel)
+    local eyes = {}
+    local descendants = islandModel:GetDescendants()
+    for i = 1, #descendants do
+        local v = descendants[i]
+        local name = v.Name
+        if name == "Eye1" or name == "Eye2" or name == "Eye3" or name == "Eye4" then
+            eyes[name] = v
+        end
+    end
+    CachedEyes = eyes
+    NextEyeCacheRefresh = tick() + 5
+end
+
+local function checkEagleEye()
+    local now = tick()
+    if now < NextEagleEyeCheck then return CachedEagleEyeResult end
+    NextEagleEyeCheck = now + 1
+
+    local islandModel = GetIslandModel()
+    if not islandModel then return false end
+
+    if not CachedEyes or now >= NextEyeCacheRefresh then RefreshEyeCache(islandModel) end
+
+    local eyes = CachedEyes
+    local e1, e2, e3, e4 = eyes.Eye1, eyes.Eye2, eyes.Eye3, eyes.Eye4
+    if not (e1 and e1.Parent and e2 and e2.Parent and e3 and e3.Parent and e4 and e4.Parent) then
+        RefreshEyeCache(islandModel)
+        eyes = CachedEyes
+        e1, e2, e3, e4 = eyes.Eye1, eyes.Eye2, eyes.Eye3, eyes.Eye4
+    end
+
+    if not (e1 and e2 and e3 and e4) then return false end
+
+    CachedEagleEyeResult = (tonumber(e1.Transparency) == 0)
+        and (tonumber(e2.Transparency) == 0)
+        and (tonumber(e3.Transparency) == 0)
+        and (tonumber(e4.Transparency) == 0)
+    return CachedEagleEyeResult
+end
+
+local function GetArena()
+    if CachedArena and CachedArena.Parent then return CachedArena end
+    local islandModel = GetIslandModel()
+    if not islandModel then return nil end
+    local descendants = islandModel:GetDescendants()
+    for i = 1, #descendants do
+        local v = descendants[i]
+        if v.Name == "EagleBossArena" then
+            CachedArena = v
+            return CachedArena
+        end
+    end
+    return nil
+end
+
+local function RefreshTreeCache(arena)
+    local trees = {}
+    local descendants = arena:GetDescendants()
+    for i = 1, #descendants do
+        local obj = descendants[i]
+        if string.lower(obj.Name) == "tree" then
+            if (obj:IsA("Model") and obj.PrimaryPart) or obj:IsA("BasePart") then
+                trees[#trees + 1] = obj
+            end
+        end
+    end
+    CachedTreeList = trees
+    NextTreeCacheRefresh = tick() + 3
+end
+
+local function getNearestTree()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    local myRoot = character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local myPos = myRoot.Position
+
+    local arena = GetArena()
+    if not arena then return nil end
+
+    local now = tick()
+    if not CachedTreeList or now >= NextTreeCacheRefresh then RefreshTreeCache(arena) end
+
+    local nearestTree = nil
+    local minDistance = math.huge
+    local trees = CachedTreeList
+    for i = 1, #trees do
+        local obj = trees[i]
+        if obj and obj.Parent then
+            local pos = nil
+            if obj:IsA("Model") and obj.PrimaryPart then
+                pos = obj.PrimaryPart.Position
+            elseif obj:IsA("BasePart") then
+                pos = obj.Position
+            end
+            if pos then
+                local dist = (pos - myPos).Magnitude
+                if dist < minDistance then
+                    minDistance = dist
+                    nearestTree = obj
+                end
+            end
+        end
+    end
+    return nearestTree
+end
+
+-- 【全新替換】吉他打罐子 Remote 邏輯（InvokeServer + 方向朝下）
+local function fireSkullGuitar(targetPos)
+    local character = LocalPlayer.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return end
+
+    -- 自動裝備吉他
+    local guitar = character:FindFirstChild("Skull Guitar")
+    if not guitar then
+        local backpack = LocalPlayer:FindFirstChild("Backpack")
+        if backpack and backpack:FindFirstChild("Skull Guitar") then
+            humanoid:EquipTool(backpack["Skull Guitar"])
+            task.wait(0.1)
+        end
+    end
+
+    guitar = character:FindFirstChild("Skull Guitar")
+    if not guitar then return end
+
+    -- 朝下攻擊的位置計算（Y軸向下降 15 單位）
+    local downPos = Vector3.new(targetPos.X, targetPos.Y - 15, targetPos.Z)
+
+    -- 搜尋 Tool 內的 RemoteFunction/RemoteEvent 進行 InvokeServer
+    local remote = guitar:FindFirstChildOfClass("RemoteFunction") or guitar:FindFirstChildOfClass("RemoteEvent") or humanoid:FindFirstChildOfClass("RemoteFunction")
+    
+    pcall(function()
+        if remote and remote:IsA("RemoteFunction") then
+            remote:InvokeServer("TAP", downPos)
+        elseif remote and remote:IsA("RemoteEvent") then
+            remote:FireServer("TAP", downPos)
+        end
+    end)
+end
+
+--====================================================
+-- 主飛怪與懸停核心
+--====================================================
+local LastFarmTick = 0
+task.spawn(function()
+    while task.wait(0.1) do
+        if _G.AutoBird then
+            if not FarmConnection then
+                FarmConnection = RunService.Heartbeat:Connect(function()
+                    if not _G.AutoBird then
+                        if FarmConnection then
+                            FarmConnection:Disconnect()
+                            FarmConnection = nil
+                        end
+                        return
+                    end
+
+                    local now = tick()
+                    if now - LastFarmTick < 0.12 then return end
+                    LastFarmTick = now
+
+                    local character = LocalPlayer.Character
+                    if not character then return end
+                    local myRoot = character:FindFirstChild("HumanoidRootPart")
+                    local hum = character:FindFirstChildOfClass("Humanoid")
+                    if not myRoot or not hum then return end
+
+                    myRoot.AssemblyLinearVelocity = ZERO
+                    myRoot.AssemblyAngularVelocity = ZERO
+
+                    if _G.isHuntingBird then
+                        BringMob = false
+                        BringCount = 0
+                        return
+                    end
+
+                    local targetMob = GetFarmTarget()
+                    if targetMob and IsAliveMob(targetMob) then
+                        local targetRoot = targetMob:FindFirstChild("HumanoidRootPart")
+                        if not targetRoot then return end
+
+                        forceNoclip()
+                        hasReachedSpawn = false
+
+                        BringMob = true
+                        MonFarm = targetMob.Name
+                        FarmPos = targetRoot.CFrame
+                        
+                        targetRoot.CanCollide = false
+                        local head = targetMob:FindFirstChild("Head")
+                        if head then head.CanCollide = false end
+
+                        local targetCFrame = targetRoot.CFrame * CFrame.new(0, 12, 0)
+                        local dist = (myRoot.Position - targetCFrame.Position).Magnitude
+                        if dist > 6 then
+                            topos(targetCFrame)
+                        else
+                            StopTween()
+                            myRoot.CFrame = targetCFrame
+                        end
+                    else
+                        BringMob = false
+                        BringCount = 0
+                        FarmPos = nil
+                        forceNoclip()
+
+                        if now - LastKillTime < 0.35 then
+                            StopTween()
+                            return
+                        end
+
+                        local waitPos = AdvanceWaitPos(myRoot)
+                        local dist = (myRoot.Position - waitPos.Position).Magnitude
+                        if dist > 6 then
+                            topos(waitPos)
+                        else
+                            StopTween()
+                            myRoot.CFrame = waitPos
+                            hasReachedSpawn = true
+                        end
+                    end
+                end)
+            end
+        else
+            if FarmConnection then
+                FarmConnection:Disconnect()
+                FarmConnection = nil
+                hasReachedSpawn = false
+                ResetFarmWaitIndex()
+            end
+            BringMob = false
+            BringCount = 0
+            FarmPos = nil
+            CachedFarmTarget = nil
+            StopTween()
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if _G.AutoBird then
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local birdAlive = false
+                local targetBirdMob = nil
+                local enemiesFolder = workspace:FindFirstChild("Enemies")
+
+                if enemiesFolder then
+                    local bird = enemiesFolder:FindFirstChild("Tyrant of the Skies")
+                    if bird then
+                        local hum = bird:FindFirstChild("Humanoid")
+                        if hum and hum.Health > 0 then
+                            birdAlive = true
+                            targetBirdMob = bird
+                        end
+                    end
+                end
+
+                local eagleEyeActive = false
+                if not birdAlive then eagleEyeActive = checkEagleEye() end
+
+                if birdAlive or eagleEyeActive then
+                    if not _G.isHuntingBird then
+                        _G.isHuntingBird = true
+                        if FarmConnection then
+                            FarmConnection:Disconnect()
+                            FarmConnection = nil
+                        end
+                    end
+                else
+                    if _G.isHuntingBird then _G.isHuntingBird = false end
+                end
+
+                if _G.isHuntingBird then
+                    if birdAlive and targetBirdMob then
+                        _G.HuntingTarget = targetBirdMob
+                        _G.HuntingType = "Bird"
+                    elseif eagleEyeActive then
+                        _G.HuntingTarget = getNearestTree()
+                        _G.HuntingType = "Tree"
+                    end
+                else
+                    _G.HuntingTarget = nil
+                    _G.HuntingType = nil
+                end
+            end
+        else
+            if _G.isHuntingBird then
+                _G.isHuntingBird = false
+                _G.HuntingTarget = nil
+                _G.HuntingType = nil
+            end
+        end
+    end
+end)
+
+local HuntingConnection = nil
+local LastHuntTick = 0
+task.spawn(function()
+    while task.wait(0.1) do
+        if _G.AutoBird then
+            if not HuntingConnection then
+                HuntingConnection = RunService.Heartbeat:Connect(function()
+                    if not _G.AutoBird or not _G.isHuntingBird or not _G.HuntingTarget then return end
+
+                    local now = tick()
+                    if now - LastHuntTick < 0.1 then return end
+                    LastHuntTick = now
+
+                    local character = LocalPlayer.Character
+                    if not character then return end
+                    local myRoot = character:FindFirstChild("HumanoidRootPart")
+                    local hum = character:FindFirstChildOfClass("Humanoid")
+                    if not myRoot or not hum then return end
+
+                    myRoot.AssemblyLinearVelocity = ZERO
+                    myRoot.AssemblyAngularVelocity = ZERO
+
+                    forceNoclip()
+
+                    if _G.HuntingType == "Bird" then
+                        local targetRoot = _G.HuntingTarget:FindFirstChild("HumanoidRootPart")
+                        if targetRoot then
+                            local targetCFrame = targetRoot.CFrame * CFrame.new(0, 12, 0)
+                            local dist = (myRoot.Position - targetCFrame.Position).Magnitude
+                            if dist > 5 then
+                                topos(targetCFrame)
+                            else
+                                StopTween()
+                                myRoot.CFrame = targetCFrame
+                            end
+                        end
+                    elseif _G.HuntingType == "Tree" then
+                        local targetTree = _G.HuntingTarget
+                        local treePos = targetTree:IsA("Model") and targetTree.PrimaryPart and targetTree.PrimaryPart.CFrame or targetTree.CFrame
+                        if treePos then
+                            local dist = (myRoot.Position - treePos.Position).Magnitude
+                            if dist > 5 then
+                                topos(treePos)
+                            else
+                                StopTween()
+                                myRoot.CFrame = treePos
+                            end
+                        end
+                    end
+                end)
+            end
+        else
+            if HuntingConnection then
+                HuntingConnection:Disconnect()
+                HuntingConnection = nil
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.35) do
+        if _G.AutoBird and _G.isHuntingBird and _G.HuntingType == "Tree" and _G.HuntingTarget then
+            pcall(function()
+                local character = LocalPlayer.Character
+                if not character then return end
+                local myRoot = character:FindFirstChild("HumanoidRootPart")
+                if not myRoot then return end
+
+                local targetTree = _G.HuntingTarget
+                local treePos = targetTree:IsA("Model") and targetTree.PrimaryPart and targetTree.PrimaryPart.CFrame or targetTree.CFrame
+                if treePos and (myRoot.Position - treePos.Position).Magnitude <= 5 then
+                    fireSkullGuitar(treePos.Position)
+                end
+            end)
+        end
+    end
+end)
+
+local function GetWeapon()
+    if not LocalPlayer then return nil end
+
+    local targetType = _G.WeaponType or "Melee"
+    local character = LocalPlayer.Character
+    if character then
+        for _, item in ipairs(character:GetChildren()) do
+            if item:IsA("Tool") and item.ToolTip == targetType then return item end
+        end
+    end
+
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if backpack then
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item:IsA("Tool") and item.ToolTip == targetType then return item end
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.AutoEquipWeapon and _G.HuntingType ~= "Tree" then
+            pcall(function()
+                local character = LocalPlayer.Character
+                local humanoid = character and character:FindFirstChild("Humanoid")
+                if not character or not humanoid or humanoid.Health <= 0 then return end
+
+                local weapon = GetWeapon()
+                if weapon and weapon.Parent ~= character then humanoid:EquipTool(weapon) end
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(5) do
+        if _G.OptimizeFPS then
+            pcall(function()
+                local effects = workspace:FindFirstChild("Effects")
+                local targets = effects and {effects} or {workspace}
+                for t = 1, #targets do
+                    local root = targets[t]
+                    local descendants = root:GetDescendants()
+                    for i = 1, #descendants do
+                        local obj = descendants[i]
+                        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                            obj:Destroy()
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+--====================================================
+-- WindUI 介面建立
+--====================================================
+WindUI:SetNotificationLower(true)
+WindUI:SetFont("rbxassetid://12187366846")
+
+local Window = WindUI:CreateWindow({
+    Title = "人擠人自動鳥王 | 客製版",
+    Author = "by kismile",
+    Folder = "AutoBirdBossConfig",
+    Size = UDim2.fromOffset(480, 360),
+    Theme = "Dark",
+    SideBarWidth = 150,
+    HideSearchBar = true,
+    ScrollBarEnabled = false
+})
+
+local Tabs = {
+    ["菜單"] = Window:Section({ Title = "功能", Opened = true }),
+    ["設置"] = Window:Section({ Title = "設定", Opened = true }),
+}
+local RJR = {
+    ["自動"] = Tabs["菜單"]:Tab({ Title = "主要功能" }),
+    ["10"] = Tabs["設置"]:Tab({ Title = "視窗設定" }),
+}
+
+RJR["自動"]:Divider()
+
+local StartFragments = 0
+pcall(function() StartFragments = LocalPlayer.Data.Fragments.Value end)
+local StartTime = tick()
+
+local FragmentsParagraph = RJR["自動"]:Paragraph({
+    Title = "統計資訊",
+    Desc = "運行時間: 0小時 0分 0秒\n初始f: " .. tostring(StartFragments) .. " | 當前f: " .. tostring(StartFragments) .. " | 增加碎片: 0"
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            local elapsed = tick() - StartTime
+            local hours = math.floor(elapsed / 3600)
+            local minutes = math.floor((elapsed % 3600) / 60)
+            local seconds = math.floor(elapsed % 60)
+            local timeStr = string.format("%d小時 %d分 %d秒", hours, minutes, seconds)
+            
+            if LocalPlayer.Data and LocalPlayer.Data:FindFirstChild("Fragments") then
+                local currentFrag = LocalPlayer.Data.Fragments.Value
+                local gained = currentFrag - StartFragments
+                FragmentsParagraph:SetDesc("運行時間: " .. timeStr .. "\n初始f: " .. tostring(StartFragments) .. " | 當前f: " .. tostring(currentFrag) .. " | 增加f: " .. tostring(gained))
+            else
+                FragmentsParagraph:SetDesc("運行時間: " .. timeStr .. "\n獲取f資訊失敗")
+            end
+        end)
+    end
+end)
+
+RJR["自動"]:Toggle({
+    Title = "開啟聚怪",
+    Default = false,
+    Callback = function(v)
+        _G.G_BringMobs = v
+        if v then
+            StartBringMobs()
+        else
+            StopBringMobs()
+        end
+    end
+})
+
+RJR["自動"]:Dropdown({
+    Title = "選擇刷怪地點",
+    Values = {"左邊", "右邊", "左右都打"},
+    Value = "左邊",
+    Callback = function(v)
+        _G.FarmLocation = v
+        hasReachedSpawn = false
+        ResetFarmWaitIndex()
+    end
+})
+
+RJR["自動"]:Toggle({
+    Title = "開啟自動刷怪與鳥王",
+    Default = false,
+    Callback = function(v) _G.AutoBird = v end
+})
+
+RJR["自動"]:Dropdown({
+    Title = "選擇主要武器",
+    Values = {"Melee", "Sword", "Blox Fruit"},
+    Value = "Melee",
+    Callback = function(v) _G.WeaponType = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "自動裝備武器",
+    Default = false,
+    Callback = function(v) _G.AutoEquipWeapon = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "自動武裝色",
+    Default = true,
+    Callback = function(v) _G.AutoHaki = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "自動 V3",
+    Default = false,
+    Callback = function(v) _G.AutoV3 = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "自動 V4",
+    Default = false,
+    Callback = function(v) _G.AutoV4 = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "快速攻擊",
+    Default = true,
+    Callback = function(v) _G.FastAttack = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "雙倍攻擊 (DoubleAttack)",
+    Default = true,
+    Callback = function(v) Config.DoubleAttack = v end
+})
+
+RJR["自動"]:Toggle({
+    Title = "移除動畫鎖 (RemoveAnim)",
+    Default = true,
+    Callback = function(v) Config.RemoveAnimationFast = v end
+})
+
+RJR["自動"]:Divider()
+
+RJR["10"]:Toggle({
+    Title = "白屏",
+    Desc = "",
+    Default = false,
+    Callback = function(state)
+        pcall(function() game:GetService("RunService"):Set3dRenderingEnabled(not state) end)
+    end
+})
+
+RJR["10"]:Toggle({
+    Title = "刪除特效 (優化FPS)",
+    Desc = "",
+    Default = _G.OptimizeFPS,
+    Callback = function(state) _G.OptimizeFPS = state end
+})
+
+RJR["10"]:Keybind({
+    Title = "視窗切換鍵",
+    Desc = "切換視窗顯示狀態",
+    Value = "L",
+    Callback = function(v) Window:SetToggleKey(Enum.KeyCode[v]) end
+})
+
+task.spawn(function()
+    while task.wait(60) do
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                local animator = char.Humanoid:FindFirstChildOfClass("Animator")
+                if animator then
+                    for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                        track:Stop()
+                    end
+                end
+            end
+        end)
+    end
+end)
